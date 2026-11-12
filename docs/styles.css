@@ -261,8 +261,22 @@ input[type=password]{background:var(--bg2);border:1px solid var(--line);color:va
 html.locked body > :not(.gate):not(svg){display:none!important}
 .gate{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:var(--bg)}
 .gate-card{width:min(380px,100%);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px 24px;text-align:center;display:flex;flex-direction:column;gap:12px}
-.gate-card h1{margin:0;font-size:22px}
+.gate-card h1{margin:0;font-size:24px;font-weight:700;letter-spacing:-.02em;color:#fff}
+.gate-card p{margin:0;line-height:1.5}
 .gate-logo{width:40px;height:40px;color:var(--acc);margin:0 auto}
-.gate-card form{display:flex;gap:8px}
-.gate-card form input{flex:1;min-width:0;text-align:center;letter-spacing:4px;font-size:18px;padding:10px;background:var(--bg2);border:1px solid var(--line);color:var(--txt);border-radius:10px}
+.gate-card form{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+
+.otp-label{font-size:13px;color:var(--mut)}
+.otp{display:flex;justify-content:center;gap:8px}
+.otp input{width:44px;height:52px;padding:0;text-align:center;font:600 22px system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg2);border:1px solid var(--line);color:#fff;border-radius:10px;outline:0;caret-color:var(--acc)}
+.otp input:focus{border-color:var(--acc)}
+@media (max-width:400px){.otp{gap:6px}.otp input{width:40px;height:48px;font-size:20px}}
 .gate-card .btn{justify-content:center}
+
+/* Bouton menu : uniquement sur petit écran */
+@media (min-width:861px){.only-mobile{display:none!important}}
+/* Barre latérale mobile : hauteur de l'écran + défilement */
+@media (max-width:860px){
+  .sidebar{top:0;bottom:0;height:100vh;height:100dvh;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:40px}
+  .sidebar > *{flex:none}
+}

@@ -19,7 +19,8 @@
       <p class="muted">Accès privé. Un code de connexion va être envoyé à l'adresse e-mail du propriétaire.</p>
       <button class="btn primary" id="gSend">Recevoir un code par e-mail</button>
       <form id="gForm" hidden>
-        <input id="gCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Code à 6 chiffres">
+        <label class="otp-label">Saisissez le code reçu</label>
+        <div class="otp">${'<input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Chiffre">'.repeat(6)}</div>
         <button class="btn primary">Se connecter</button>
       </form>
       <p class="small muted" id="gMsg"></p>
@@ -27,6 +28,22 @@
   document.body.prepend(box);
 
   let hash = null, expires = 0, tries = 0;
+  const digits = [...box.querySelectorAll('.otp input')];
+  digits.forEach((d, i) => {
+    d.addEventListener('input', () => {
+      d.value = d.value.replace(/\D/g, '').slice(-1);
+      if (d.value && digits[i + 1]) digits[i + 1].focus();
+      if (digits.every(x => x.value)) box.querySelector('#gForm').requestSubmit();
+    });
+    d.addEventListener('keydown', e => { if (e.key === 'Backspace' && !d.value && digits[i - 1]) digits[i - 1].focus(); });
+    d.addEventListener('paste', e => {
+      const t = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+      if (!t) return; e.preventDefault();
+      t.split('').forEach((c, k) => { if (digits[k]) digits[k].value = c; });
+      (digits[t.length] || digits[5]).focus();
+      if (t.length === 6) box.querySelector('#gForm').requestSubmit();
+    });
+  });
   const sha = async s => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))].map(b => b.toString(16).padStart(2, '0')).join('');
   const msg = t => { box.querySelector('#gMsg').textContent = t; };
 
@@ -41,7 +58,7 @@
       const j = await r.json().catch(() => ({}));
       if (!r.ok || j.success === false) throw new Error(j.message || 'Envoi impossible');
       hash = await sha(code); expires = Date.now() + 10 * 60e3; tries = 0;
-      box.querySelector('#gForm').hidden = false; box.querySelector('#gCode').focus();
+      box.querySelector('#gForm').hidden = false; digits[0].focus();
       msg('Code envoyé. Consultez votre boîte mail (et les spams).');
       setTimeout(() => { b.disabled = false; b.textContent = 'Renvoyer un code'; }, 30000);
     } catch (err) { msg('Erreur : ' + err.message); b.disabled = false; }
@@ -49,10 +66,11 @@
 
   box.querySelector('#gForm').onsubmit = async e => {
     e.preventDefault();
-    const v = box.querySelector('#gCode').value.trim();
+    const v = digits.map(d => d.value).join('');
+    if (v.length < 6) return msg('Entrez les 6 chiffres.');
     if (!hash || Date.now() > expires) return msg('Code expiré : demandez-en un nouveau.');
     if (++tries > 5) { hash = null; return msg('Trop d\'essais : demandez un nouveau code.'); }
-    if (await sha(v) !== hash) return msg('Code incorrect.');
+    if (await sha(v) !== hash) { digits.forEach(d => d.value = ''); digits[0].focus(); return msg('Code incorrect.'); }
     localStorage.setItem(KEY, JSON.stringify({ until: Date.now() + DAYS * 864e5 }));
     document.documentElement.classList.remove('locked'); box.remove();
   };
