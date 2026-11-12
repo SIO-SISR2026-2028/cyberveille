@@ -10,7 +10,7 @@ const store = { get(k, d) { try { return JSON.parse(localStorage.getItem('cv_' +
 
 const S = {
   meta: null, articles: [], pending: [], freshIds: new Set(), chatHistory: [], lastRefs: [],
-  pmode: store.get('pmode', 'week'), anchor: new Date(), loadedMonths: new Set(), view: store.get('view2', 'france'), region: store.get('region', 'all'),
+  pmode: store.get('pmode', 'week'), anchor: new Date(), loadedMonths: new Set(), view: store.get('view3', 'priority'), region: store.get('region', 'all'),
   levels: new Set(store.get('levels', LVLS).filter(l => l !== 'info')), hidden: new Set(store.get('hidden', [])), q: '',
   ai: null,
 };
@@ -77,6 +77,7 @@ function shift(dir) {
 async function changePeriod() {
   $$('#pmode button').forEach(b => b.classList.toggle('on', b.dataset.m === S.pmode));
   $('#pLabel').textContent = periodLabel();
+  $('#tabPeriod').textContent = { week: 'Semaine', month: 'Mois', year: 'Année' }[S.pmode];
   $('#pNext').disabled = range()[1] > Date.now();
   await ensureMonths(); render();
 }
@@ -121,22 +122,16 @@ function render() {
   $('#countLbl').textContent = `${list.length} actualité${list.length > 1 ? 's' : ''}`;
   $('#empty').hidden = list.length > 0;
   let html = '';
-  const rank = a => ORDER[a.level] * 100 + a.score + Math.max(0, 48 - (Date.now() - a.published) / 36e5) / 2;
-  if (S.view === 'france') {
-    // Bloc France (classé par importance) puis le reste du monde (classé par importance)
-    const fr = list.filter(a => a.france).sort((a, b) => rank(b) - rank(a)).slice(0, 200);
-    const world = list.filter(a => !a.france).sort((a, b) => rank(b) - rank(a)).slice(0, 200);
-    if (fr.length) html += `<div class="day-head">${FLAG} Concerne la France<span class="pill">${fr.length} actus</span><span class="bar"></span></div>` + fr.map(card).join('');
-    if (world.length) html += `<div class="day-head">${ic('globe')} Reste du monde<span class="pill">${world.length} actus</span><span class="bar"></span></div>` + world.map(card).join('');
-  } else if (S.view === 'priority') {
-    html = list.sort((a, b) => rank(b) - rank(a)).slice(0, 300).map(card).join('');
+  const byCrit = (a, b) => ORDER[b.level] - ORDER[a.level] || b.score - a.score || b.published - a.published;
+  if (S.view === 'priority' || S.view === 'france') {
+    html = list.sort(byCrit).slice(0, 300).map(card).join('');
   } else if (S.view === 'days') {
     const groups = new Map();
     list.sort((a, b) => b.published - a.published).forEach(a => {
       const k = new Date(a.published).toDateString(); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(a);
     });
     for (const [, arts] of groups) {
-      arts.sort((a, b) => (b.france - a.france) || ORDER[b.level] - ORDER[a.level] || b.score - a.score);
+      arts.sort(byCrit);
       const crit = arts.filter(a => a.level === 'critique').length;
       html += `<div class="day-head">${dayLabel(arts[0].published)}<span class="pill">${arts.length} actus${crit ? ` · ${crit} critique${crit > 1 ? 's' : ''}` : ''}</span><span class="bar"></span></div>` + arts.map(card).join('');
     }
@@ -329,7 +324,7 @@ function bind() {
   $('#pPrev').onclick = () => shift(-1); $('#pNext').onclick = () => shift(1);
   $('#pToday').onclick = () => { S.anchor = new Date(); changePeriod(); };
   $$('#region button').forEach(b => { b.classList.toggle('on', b.dataset.r === S.region); b.onclick = () => { S.region = b.dataset.r; store.set('region', S.region); $$('#region button').forEach(x => x.classList.toggle('on', x === b)); render(); }; });
-  $$('#viewTabs button').forEach(b => { b.classList.toggle('on', b.dataset.v === S.view); b.onclick = () => { S.view = b.dataset.v; store.set('view2', S.view); $$('#viewTabs button').forEach(x => x.classList.toggle('on', x === b)); render(); }; });
+  $$('#viewTabs button').forEach(b => { b.classList.toggle('on', b.dataset.v === S.view); b.onclick = () => { S.view = b.dataset.v; store.set('view3', S.view); $$('#viewTabs button').forEach(x => x.classList.toggle('on', x === b)); render(); }; });
 
   $('#levelFilters').onclick = e => { const b = e.target.closest('[data-l]'); if (!b) return; const l = b.dataset.l; S.levels.has(l) ? S.levels.delete(l) : S.levels.add(l); store.set('levels', [...S.levels]); render(); };
   $('#stats').onclick = e => { const s = e.target.closest('[data-lvl]'); if (!s || !LVLS.includes(s.dataset.lvl)) return; S.levels = new Set([s.dataset.lvl]); store.set('levels', [...S.levels]); render(); toast('Filtre : ' + LBL[s.dataset.lvl] + ' uniquement'); };
