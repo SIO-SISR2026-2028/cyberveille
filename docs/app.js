@@ -150,7 +150,7 @@ function renderStats() {
   const today = base.filter(a => Date.now() - a.published < 864e5).length;
   $('#stats').innerHTML = [
     ['critique', c('critique'), 'Critiques'], ['eleve', c('eleve'), 'Élevées'], ['moyen', c('moyen'), 'Moyennes'],
-    ['acc', base.filter(a => a.france && ORDER[a.level] >= 3).length, 'Graves en France'], ['faible', S.meta.sources.filter(s => s.status?.ok).length + '/' + S.meta.sources.length, 'Sources joignables'],
+    ['acc', base.filter(a => a.france && a.level === 'critique').length, 'Critiques en France'], ['faible', S.meta.sources.filter(s => s.status?.ok).length + '/' + S.meta.sources.length, 'Sources joignables'],
   ].map(([k, v, l]) => `<div class="stat" data-lvl="${k}" style="--c:var(--${k})" ${l === 'Sources joignables' ? `title="${esc(S.meta.sources.filter(s => !s.status?.ok).map(s => s.name + ' : ' + (s.status?.lastError || 'en attente')).join('\n') || 'Toutes les sources répondent')}"` : ''}><b>${v}</b><span>${l}</span></div>`).join('');
 }
 function renderSidebarCounts() {
@@ -392,7 +392,7 @@ function bind() {
   $$('#viewTabs button').forEach(b => { b.classList.toggle('on', b.dataset.v === S.view); b.onclick = () => { S.view = b.dataset.v; store.set('view3', S.view); $$('#viewTabs button').forEach(x => x.classList.toggle('on', x === b)); render(); }; });
 
   $('#levelFilters').onclick = e => { const b = e.target.closest('[data-l]'); if (!b) return; const l = b.dataset.l; S.levels.has(l) ? S.levels.delete(l) : S.levels.add(l); store.set('levels', [...S.levels]); render(); };
-  $('#stats').onclick = e => { const s = e.target.closest('[data-lvl]'); if (!s || !LVLS.includes(s.dataset.lvl)) return; S.levels = new Set([s.dataset.lvl]); store.set('levels', [...S.levels]); render(); toast('Filtre : ' + LBL[s.dataset.lvl] + ' uniquement'); };
+  $('#stats').onclick = e => { const s = e.target.closest('[data-lvl]'); if (s && s.dataset.lvl === 'acc') { S.levels = new Set(['critique']); S.region = 'fr'; store.set('levels', [...S.levels]); store.set('region', 'fr'); $$('#region button').forEach(x => x.classList.toggle('on', x.dataset.r === 'fr')); render(); toast('Filtre : critiques en France'); return; } if (!s || !LVLS.includes(s.dataset.lvl)) return; S.levels = new Set([s.dataset.lvl]); store.set('levels', [...S.levels]); render(); toast('Filtre : ' + LBL[s.dataset.lvl] + ' uniquement'); };
   $('#sourceList').onchange = e => { const id = e.target.dataset.s; e.target.checked ? S.hidden.delete(id) : S.hidden.add(id); store.set('hidden', [...S.hidden]); render(); };
   $('#srcAll').onclick = e => { e.preventDefault(); S.hidden.clear(); store.set('hidden', []); render(); };
   $('#srcNone').onclick = e => { e.preventDefault(); S.hidden = new Set(S.meta.sources.map(s => s.id)); store.set('hidden', [...S.hidden]); render(); };
