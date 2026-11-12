@@ -154,8 +154,9 @@ function renderStats() {
   ].map(([k, v, l]) => `<div class="stat" data-lvl="${k}" style="--c:var(--${k})" ${l === 'Sources joignables' ? `title="${esc(S.meta.sources.filter(s => !s.status?.ok).map(s => s.name + ' : ' + (s.status?.lastError || 'en attente')).join('\n') || 'Toutes les sources répondent')}"` : ''}><b>${v}</b><span>${l}</span></div>`).join('');
 }
 function renderSidebarCounts() {
-  const [since, until] = range(), recent = S.articles.filter(a => a.published >= since && a.published < until);
-  $('#levelFilters').innerHTML = LVLS.map(l => `<button class="lvl-chip ${S.levels.has(l) ? '' : 'off'}" data-l="${l}"><span class="sw" style="background:var(--${l})"></span>${LBL[l]}<span class="n">${recent.filter(a => a.level === l).length}</span></button>`).join('');
+  const [since, until] = range(), recent = S.articles.filter(a => a.published >= since && a.published < until && (S.region === 'all' || (S.region === 'fr') === !!a.france));
+  const recentLvl = recent.filter(a => !S.hidden.has(a.sourceId));
+  $('#levelFilters').innerHTML = LVLS.map(l => `<button class="lvl-chip ${S.levels.has(l) ? '' : 'off'}" data-l="${l}"><span class="sw" style="background:var(--${l})"></span>${LBL[l]}<span class="n">${recentLvl.filter(a => a.level === l).length}</span></button>`).join('');
   const row = s => `<label class="src" title="${s.status?.ok ? 'OK — vérifié ' + ago(s.status.lastCheck) : esc(s.status?.lastError || 'En attente')}"><input type="checkbox" data-s="${s.id}" ${S.hidden.has(s.id) ? '' : 'checked'}><span class="st ${s.status ? (s.status.ok ? 'ok' : 'ko') : ''}"></span>${esc(s.name)}<span class="c">${recent.filter(a => a.sourceId === s.id).length}</span></label>`;
   const g = (t, f) => `<div class="src-group">${t}</div>` + S.meta.sources.filter(f).map(row).join('');
   $('#sourceList').innerHTML = g(ic('building') + ' Officiel', s => s.type === 'officiel') + g(ic('news') + ' Médias FR', s => s.region === 'fr' && s.type === 'media') + g(ic('globe') + ' International', s => s.region === 'int');
