@@ -86,13 +86,14 @@
 
     <section class="ai-brief" id="brief">
       <div class="brief-head">
-        <div><b><svg class="i"><use href="#i-spark"/></svg> IA de veille</b><small>IA locale dans votre navigateur · vos sources uniquement</small></div>
+        <div><b><svg class="i"><use href="#i-spark"/></svg> IA de veille</b><small>Tourne dans votre navigateur · aucune donnée envoyée ni conservée · vos sources uniquement</small></div>
         <div class="brief-actions">
           <select id="briefHours"><option value="24">24 h</option><option value="72">3 jours</option><option value="168">7 jours</option></select>
           <select id="briefStyle"><option value="court">Court</option><option value="standard" selected>Standard</option><option value="detaille">Détaillé</option></select>
           <button class="btn small" id="btnBrief">Générer</button>
         </div>
       </div>
+      <div class="llm-row"><select class="llm-size" aria-label="Taille du modèle"></select><button type="button" class="btn small llm-btn">Activer l'IA avancée</button><span class="llm-status small muted">IA simple active. L'IA avancée est un vrai modèle de langage gratuit, sans compte, qui tourne sur votre appareil.</span></div>
       <form class="askbar" id="askForm"><input id="askQ" placeholder="Demandez à l'IA : « menaces sur la France ? », « détails sur 2 », « CVE-2026-… », « ransomware hôpital »…" autocomplete="off"><button class="btn primary"><svg class="i"><use href="#i-send"/></svg> Demander</button></form>
       <div class="ask-out" id="askOut"></div>
       <div class="brief-body" id="briefBody"><span class="muted">Ou cliquez sur « Générer » pour un résumé des menaces de la période.</span></div>
@@ -119,6 +120,8 @@
     <div><b><svg class="i"><use href="#i-spark"/></svg> Assistant CyberVeille</b><small>IA locale · rien ne sort de votre navigateur</small></div>
     <button class="icon-btn" data-close="aiDrawer"><svg class="i"><use href="#i-x"/></svg></button>
   </div>
+  <div class="llm-row" style="padding:10px 16px 0"><select class="llm-size" aria-label="Taille du modèle"></select><button type="button" class="btn small llm-btn">Activer l'IA avancée</button></div>
+  <div class="llm-status small muted" style="padding:6px 16px 0"></div>
   <div class="chat" id="chat">
     <div class="msg bot">Bonjour. Je connais toutes les actualités collectées sur vos 24 sources. Posez-moi une question ou choisissez une suggestion.</div>
   </div>

@@ -122,7 +122,7 @@
       let answer = intro + (list.length ? '\n' + list.map((a, i) => line(a, i + 1)).join('\n') : '');
       const crit = list.filter(a => a.level === 'critique').length;
       if (crit) answer += `\n\n**Attention :** ${crit} menace(s) critique(s) : consultez les avis et appliquez les correctifs sans attendre.`;
-      if (list.length) answer += `\n\n*Tapez « détails sur 2 » pour approfondir une actu.*`;
+      if (list.length) answer += `\n\nTapez « détails sur 2 » pour approfondir une actu.`;
       return { answer, refs: list };
     }
 

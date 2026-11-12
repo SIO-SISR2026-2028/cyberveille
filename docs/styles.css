@@ -227,3 +227,6 @@ input[type=password]{background:var(--bg2);border:1px solid var(--line);color:va
   .art{min-width:0}
 }
 .askbar input{min-width:0}
+
+.llm-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.llm-row select{padding:6px 8px}.llm-status{flex:1 1 260px}
+.llm-status .i{width:14px;height:14px}
