@@ -1,0 +1,22 @@
+{
+  "_aide": "Modifiez ce fichier directement sur GitHub (icône crayon). Votre adresse e-mail n'est PAS ici : elle est dans les Secrets du dépôt (MAIL_TO).",
+  "email": {
+    "actif": true,
+    "frequence": "quotidien",
+    "_frequences_possibles": "instantane | horaire | 6h | quotidien | hebdomadaire",
+    "heure": "08:00",
+    "jour_semaine": 1,
+    "_jour_semaine": "0 = dimanche, 1 = lundi … 6 = samedi (pour hebdomadaire)",
+    "gravite_minimale": "moyen",
+    "_gravites": "info | faible | moyen | eleve | critique",
+    "zone": "toutes",
+    "_zones": "toutes | fr | int",
+    "sources": [],
+    "_sources": "vide = toutes. Sinon ex. [\"certfr\", \"anssi\", \"zataz\", \"bleeping\"]",
+    "mots_cles": [],
+    "_mots_cles": "vide = tout. Sinon ex. [\"fortinet\", \"ransomware\", \"santé\"]",
+    "max_actus": 20,
+    "resume": "standard",
+    "_resumes": "aucun | court | standard | detaille"
+  }
+}

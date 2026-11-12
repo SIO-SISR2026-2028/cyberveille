@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d16">
+<title>CyberVeille — Veille cybersécurité en temps réel</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<meta name="referrer" content="no-referrer">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="bg-grid"></div>
+
+<header class="topbar">
+  <button class="icon-btn only-mobile" id="btnMenu" aria-label="Filtres">☰</button>
+  <div class="brand"><span class="logo">🛡️</span><div><b>CyberVeille</b><small id="liveState"><i class="dot"></i> Connexion…</small></div></div>
+  <div class="search"><span>⌕</span><input id="q" type="search" placeholder="Rechercher (titre, CVE, éditeur, ransomware…)" autocomplete="off"><kbd>/</kbd></div>
+  <div class="top-actions">
+    <button class="btn ghost hide-mobile" id="btnRefresh" title="Recharger les dernières données">⟳ <span>Actualiser</span></button>
+    <button class="btn ghost" id="btnAlerts">✉ <span class="hide-mobile">Alertes e-mail</span></button>
+    <button class="btn primary" id="btnAI">✦ <span class="hide-mobile">Assistant IA</span></button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head only-mobile"><b>Filtres</b><button class="icon-btn" id="btnCloseSide">✕</button></div>
+
+    <section class="panel">
+      <h4>Période</h4>
+      <div class="seg" id="period">
+        <button data-d="1">24 h</button><button data-d="3">3 j</button><button data-d="7" class="on">7 j</button><button data-d="30">30 j</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h4>Gravité</h4>
+      <div id="levelFilters" class="chips-col"></div>
+    </section>
+
+    <section class="panel">
+      <h4>Zone</h4>
+      <div class="seg" id="region"><button data-r="all" class="on">Toutes</button><button data-r="fr">🇫🇷 France</button><button data-r="int">🌍 Monde</button></div>
+    </section>
+
+    <section class="panel">
+      <h4>Sources <a href="#" id="srcAll">tout</a> · <a href="#" id="srcNone">aucune</a></h4>
+      <div id="sourceList" class="source-list"></div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <section class="stats" id="stats"></section>
+
+    <section class="ai-brief" id="brief">
+      <div class="brief-head">
+        <div><b>✦ Brief IA</b><small>IA locale dans votre navigateur · vos sources uniquement</small></div>
+        <div class="brief-actions">
+          <select id="briefHours"><option value="24">24 h</option><option value="72">3 jours</option><option value="168">7 jours</option></select>
+          <select id="briefStyle"><option value="court">Court</option><option value="standard" selected>Standard</option><option value="detaille">Détaillé</option></select>
+          <button class="btn small" id="btnBrief">Générer</button>
+        </div>
+      </div>
+      <div class="brief-body" id="briefBody"><span class="muted">Cliquez sur « Générer » pour obtenir le résumé des dernières actualités.</span></div>
+    </section>
+
+    <div class="toolbar">
+      <div class="tabs" id="viewTabs">
+        <button data-v="priority" class="on">🔥 Priorité</button>
+        <button data-v="days">📅 Par jour</button>
+        <button data-v="timeline">⏱ Chronologique</button>
+      </div>
+      <div class="muted" id="countLbl"></div>
+    </div>
+
+    <div id="newBanner" class="new-banner" hidden>↑ <b id="newCount">0</b> nouvelle(s) actualité(s) — afficher</div>
+    <div id="feed" class="feed"></div>
+    <div id="empty" class="empty" hidden><div>🛰️</div><p>Aucune actualité ne correspond à vos filtres.</p></div>
+  </main>
+</div>
+
+<!-- Assistant IA -->
+<aside class="drawer" id="aiDrawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div><b>✦ Assistant CyberVeille</b><small>IA locale · rien ne sort de votre navigateur</small></div>
+    <button class="icon-btn" data-close="aiDrawer">✕</button>
+  </div>
+  <div class="chat" id="chat">
+    <div class="msg bot">Bonjour 👋 Je connais toutes les actualités collectées sur vos 24 sources. Posez-moi une question ou choisissez une suggestion.</div>
+  </div>
+  <div class="suggest" id="suggest">
+    <button>Quelles sont les menaces critiques aujourd'hui ?</button>
+    <button>Quelles CVE dois-je corriger en priorité ?</button>
+    <button>Résume l'actualité ransomware de la semaine</button>
+    <button>Quelles alertes a publié le CERT-FR ?</button>
+  </div>
+  <form class="chat-input" id="chatForm"><textarea id="chatQ" rows="1" placeholder="Votre question…"></textarea><button class="btn primary">➤</button></form>
+</aside>
+
+<!-- Alertes e-mail -->
+<div class="modal" id="mailModal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="drawer-head"><div><b>✉ Alertes e-mail</b><small>Configurées dans votre dépôt GitHub : votre adresse reste privée (Secrets), jamais publiée.</small></div><button class="icon-btn" data-close="mailModal">✕</button></div>
+    <div class="form" style="display:block">
+      <div id="mailInfo" class="muted">Chargement…</div>
+      <h4 style="margin:18px 0 6px">Modifier les réglages</h4>
+      <ol class="steps">
+        <li><b>Fréquence, gravité, sources, mots-clés, résumé</b> : ouvrez <code>config.json</code> dans votre dépôt GitHub → icône ✏️ → modifiez → « Commit changes ».</li>
+        <li><b>Changer d'adresse</b> : Settings → Secrets and variables → Actions → modifiez <code>MAIL_TO</code>.</li>
+        <li><b>Arrêter les e-mails</b> : mettez <code>"actif": false</code> dans <code>config.json</code>, ou supprimez le secret <code>MAIL_TO</code> pour effacer votre adresse.</li>
+      </ol>
+      <div class="form-actions"><a class="btn primary" id="cfgLink" target="_blank">Ouvrir config.json ↗</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="toasts" id="toasts"></div>
+<script src="ai-local.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

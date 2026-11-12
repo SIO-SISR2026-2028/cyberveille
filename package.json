@@ -1,0 +1,11 @@
+{
+  "name": "cyberveille",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Veille cybersécurité hébergée gratuitement sur GitHub Pages, collecte via GitHub Actions.",
+  "scripts": { "collect": "node scripts/collect.js" },
+  "dependencies": {
+    "nodemailer": "^6.9.15",
+    "rss-parser": "^3.13.0"
+  }
+}
