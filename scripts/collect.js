@@ -69,11 +69,12 @@ async function translate(text) {
   if (!text) return text;
   const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=fr&dt=t&q=' + encodeURIComponent(text.slice(0, 1500));
   const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
-  if (!r.ok) throw new Error('trad ' + r.status);
+  if (!r.ok) throw new Error('trad HTTP ' + r.status + ' ' + (await r.text()).slice(0, 100));
   const j = await r.json();
   if (j[2] === 'fr') return null; // déjà en français
   return j[0].map(x => x[0]).join('');
 }
+const TRAD = { error: null, done: 0 };
 async function translateBatch(list, max = 80) {
   let n = 0;
   for (const a of list) {
@@ -85,9 +86,9 @@ async function translateBatch(list, max = 80) {
       const sm = a.summary ? await translate(a.summary) : '';
       a.titleOrig = a.title; a.summaryOrig = a.summary;
       a.title = t; a.summary = sm || a.summary; a.lang = 'en'; n++;
-    } catch (e) { console.warn('[trad]', e.message); break; }
+    } catch (e) { console.warn('[trad]', e.message); TRAD.error = String(e.message).slice(0, 200); break; }
   }
-  console.log(`[trad] ${n} articles traduits`);
+  TRAD.done = n; console.log(`[trad] ${n} articles traduits`);
 }
 
 // ---------- E-mail ----------
@@ -193,7 +194,7 @@ async function maybeMail(articles, state) {
   }
   const months = fs.readdirSync(ARCH).filter(f => /^\d{4}-\d{2}\.json$/.test(f)).map(f => f.slice(0, 7)).sort();
   fs.writeFileSync(path.join(DATA, 'meta.json'), JSON.stringify({
-    updated: Date.now(), months,
+    updated: Date.now(), months, trad: TRAD,
     sources: sources.map(({ feeds, ...s }) => ({ ...s, status: state.sources[s.id] || null })),
   }));
   console.log(`[collecte] ${fresh.length} nouveaux, ${articles.length} au total, ${Object.values(state.sources).filter(s => s.ok).length}/${sources.length} sources OK`);
