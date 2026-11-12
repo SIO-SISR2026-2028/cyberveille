@@ -1,6 +1,8 @@
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const ORDER = { info: 0, faible: 1, moyen: 2, eleve: 3, critique: 4 };
 const REPO = (() => { const m = location.hostname.match(/^([^.]+)\.github\.io$/); const r = location.pathname.split('/').filter(Boolean)[0]; return m && r ? m[1] + '/' + r : 'SIO-SISR2026-2028/cyberveille'; })();
+// Données publiques mises à jour par GitHub Actions (le site lui-même est hébergé et protégé par Cloudflare)
+const DATA = location.hostname.endsWith('github.io') || location.hostname === 'localhost' ? 'data/' : 'https://raw.githubusercontent.com/' + REPO + '/main/docs/data/';
 const ic = n => `<svg class="i" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const FLAG = '<span class="flag-fr" aria-hidden="true"></span>';
 const LBL = { critique: 'Critique', eleve: 'Élevé', moyen: 'Moyen', faible: 'Faible', info: 'Info' };
@@ -90,7 +92,7 @@ async function ensureMonths() {
   }
   if (!need.length) return;
   $('#countLbl').textContent = 'Chargement des archives…';
-  const lists = await Promise.all(need.map(k => api('data/archive/' + k + '.json').catch(() => [])));
+  const lists = await Promise.all(need.map(k => api(DATA + 'archive/' + k + '.json').catch(() => [])));
   const ids = new Set(S.articles.map(a => a.id));
   lists.flat().forEach(a => { if (!ids.has(a.id)) { S.articles.push(a); ids.add(a.id); } });
   need.forEach(k => S.loadedMonths.add(k));
@@ -162,7 +164,7 @@ function renderSidebarCounts() {
 /* ---------- Data loading (fichiers statiques mis à jour par GitHub Actions) ---------- */
 async function fetchData() {
   const t = Date.now();
-  const [meta, articles] = await Promise.all([api('data/meta.json?t=' + t), api('data/articles.json?t=' + t)]);
+  const [meta, articles] = await Promise.all([api(DATA + 'meta.json?t=' + t), api(DATA + 'articles.json?t=' + t)]);
   meta.ai = true; articles.forEach(x => { if (x.level === 'info') x.level = 'faible'; }); return { meta, articles };
 }
 function setLive() {
