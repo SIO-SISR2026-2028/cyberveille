@@ -280,3 +280,21 @@ html.locked body > :not(.gate):not(svg){display:none!important}
   .sidebar{top:0;bottom:0;height:100vh;height:100dvh;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:40px}
   .sidebar > *{flex:none}
 }
+
+/* Panneau de filtres mobile, refait */
+@media (max-width:860px){
+  .sidebar{left:0;right:auto;width:min(360px,92vw);padding:0 0 0 0;gap:0;background:var(--bg2);border-right:1px solid var(--line);box-shadow:0 0 40px #000a}
+  .sidebar .side-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg2);border-bottom:1px solid var(--line)}
+  .sidebar .side-head b{font-size:16px}
+  .sidebar .panel{margin:12px 14px 0;padding:14px;border-radius:12px}
+  .sidebar .seg{display:grid;grid-template-columns:1fr 1fr}
+  .sidebar .seg button{padding:10px 6px;font-size:14px}
+  .sidebar .lvl-chip{padding:11px 12px;font-size:15px}
+  .sidebar .src{padding:9px 6px;font-size:14.5px}
+  .sidebar .src input{width:18px;height:18px}
+  .sidebar .side-foot{position:sticky;bottom:0;z-index:2;display:flex;margin-top:12px;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:var(--bg2);border-top:1px solid var(--line)}
+  .sidebar .side-foot .btn{flex:1;justify-content:center;padding:12px}
+  .sidebar::-webkit-scrollbar{width:0}
+  .sidebar{scrollbar-width:none;padding-bottom:0}
+}
+@media (min-width:861px){.side-foot{display:none!important}}

@@ -327,7 +327,8 @@ function saveMail(e) {
 /* ---------- Events ---------- */
 function bind() {
   $('#btnMenu').onclick = () => open('sidebar');
-  $('#btnCloseSide').onclick = closeAll; $('#scrim').onclick = closeAll;
+  $('#btnCloseSide').onclick = closeAll;
+  $('#btnApplySide').onclick = () => { closeAll(); window.scrollTo({ top: 0, behavior: 'smooth' }); }; $('#scrim').onclick = closeAll;
   $$('[data-close]').forEach(b => b.onclick = closeAll);
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeAll();
