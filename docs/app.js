@@ -229,7 +229,10 @@ async function loadLLM(size) {
   $$('.llm-btn').forEach(b => b.disabled = true);
   try {
     const webllm = await import('https://esm.run/@mlc-ai/web-llm@0.2.88');
-    LLM.engine = await webllm.CreateMLCEngine(LLM_MODELS[size].id, {
+    const adapter = await navigator.gpu.requestAdapter();
+    const f16 = adapter && adapter.features.has('shader-f16');
+    const modelId = f16 ? LLM_MODELS[size].id : LLM_MODELS[size].id.replace('q4f16_1', 'q4f32_1');
+    LLM.engine = await webllm.CreateMLCEngine(modelId, {
       initProgressCallback: p => llmStatus(`Téléchargement / chargement du modèle : ${Math.round((p.progress || 0) * 100)} % <span class="muted">(une seule fois, ensuite en cache)</span>`),
     });
     LLM.size = size; store.set('llmSize', size);
