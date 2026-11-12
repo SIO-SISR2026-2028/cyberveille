@@ -175,7 +175,10 @@ async function maybeMail(articles, state) {
   const state = readJSON(STATE, { sources: {} });
   let articles = readJSON(path.join(DATA, 'articles.json'), []);
   const known = new Set(articles.map(a => a.id));
-  const results = await Promise.allSettled(sources.map(s => Promise.race([fetchSource(s, state, known), new Promise((_, rej) => setTimeout(() => { state.sources[s.id] = { ...(state.sources[s.id] || {}), ok: false, lastCheck: Date.now(), lastError: 'Délai dépassé' }; rej(new Error('timeout')); }, 40000))])));
+  const results = await Promise.allSettled(sources.map(s => { let done = false, timer; return Promise.race([
+    fetchSource(s, state, known).finally(() => { done = true; clearTimeout(timer); }),
+    new Promise((_, rej) => { timer = setTimeout(() => { if (done) return; state.sources[s.id] = { ...(state.sources[s.id] || {}), ok: false, lastCheck: Date.now(), lastError: 'Délai dépassé' }; rej(new Error('timeout')); }, 40000); }),
+  ]); }));
   const fresh = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
   const cutoff = Date.now() - RETENTION_DAYS * 864e5;
   const srcIds = new Set(sources.map(s => s.id));
