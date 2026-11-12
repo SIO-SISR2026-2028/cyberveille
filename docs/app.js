@@ -174,14 +174,14 @@ async function load() {
   try { ({ meta: S.meta, articles: S.articles } = await fetchData()); }
   catch { S.meta = { updated: Date.now(), sources: [], ai: true }; S.articles = []; $('#feed').innerHTML = ''; toast("Pas encore de données : la première collecte GitHub n'a pas encore tourné."); }
   S.ai = LocalAI.create(() => S.articles, S.meta.sources);
-  await changePeriod(); setLive();
+  await changePeriod(); setLive(); loadBrief();
   setInterval(poll, 60000); setInterval(setLive, 60000);
 }
 async function poll(manual) {
   try {
     const d = await fetchData(), ids = new Set(S.articles.map(a => a.id));
     const fresh = d.articles.filter(a => !ids.has(a.id));
-    S.meta = d.meta; setLive();
+    S.meta = d.meta; setLive(); loadBrief();
     if (fresh.length) {
       S.pending.push(...fresh.filter(a => !S.pending.some(p => p.id === a.id)));
       $('#newCount').textContent = S.pending.length; $('#newBanner').hidden = false;
@@ -206,108 +206,33 @@ function closeAll() { $$('.drawer,.modal,.sidebar').forEach(e => e.classList.rem
 
 /* ---------- AI ---------- */
 function addMsg(cls, html) { const d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html; $('#chat').append(d); $('#chat').scrollTop = 1e9; return d; }
-/* IA avancée : modèle de langage exécuté DANS le navigateur (WebLLM + WebGPU).
-   Aucun compte, aucun serveur, aucune conversation conservée. Seul le modèle est mis en cache. */
-const LLM_MODELS = {
-  leger: { id: 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC', label: 'Léger (~400 Mo, basique)' },
-  standard: { id: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC', label: 'Standard (~1 Go)' },
-  puissant: { id: 'Qwen2.5-3B-Instruct-q4f16_1-MLC', label: 'Puissant (~2 Go, PC)' },
-};
-const LLM = { engine: null, loading: false, size: null };
-const SYS = `Tu es un assistant de veille cybersécurité. Tu résumes et expliques des articles d'actualité PUBLICS fournis par l'utilisateur. Ces informations sont publiques : tu dois toujours y répondre.
-Règles : utilise uniquement les articles fournis, n'invente rien, cite les articles avec leur numéro entre crochets comme [2], réponds en français avec des listes à puces, et termine par des recommandations concrètes si c'est utile.`;
-const userMsg = (refs, q) => `Voici les articles d'actualité cybersécurité publiés par mes sources :\n\n${ctxText(refs)}\n\nMa question : ${q}\n\nRéponds en t'appuyant uniquement sur ces articles et cite-les avec [numéro].`;
-
-function llmStatus(html) { $$('.llm-status').forEach(e => e.innerHTML = html); }
-async function loadLLM(size) {
-  if (LLM.loading) return;
-  if (!navigator.gpu) { llmStatus(`${ic('alert')} Ce navigateur ne gère pas WebGPU : utilisez Chrome ou Edge à jour pour l'IA complète.`); return; }
-  LLM.loading = true; LLM.engine = null;
-  try {
-    const webllm = await import('https://esm.run/@mlc-ai/web-llm@0.2.88');
-    const adapter = await navigator.gpu.requestAdapter();
-    const f16 = adapter && adapter.features.has('shader-f16');
-    const modelId = f16 ? LLM_MODELS[size].id : LLM_MODELS[size].id.replace('q4f16_1', 'q4f32_1');
-    LLM.engine = await webllm.CreateMLCEngine(modelId, {
-      initProgressCallback: p => llmStatus(`Chargement de l'IA : ${Math.round((p.progress || 0) * 100)} % <span class="muted">(premier lancement uniquement, ensuite instantané)</span>`),
-    });
-    LLM.size = size;
-    llmStatus(`${ic('check')} IA prête · 100 % dans votre navigateur`);
-  } catch (e) {
-    llmStatus(`${ic('alert')} Impossible de charger l'IA (${esc(e.message)}).`);
-  }
-  LLM.loading = false;
-}
-
-// Choisit les articles servant de contexte (recherche locale), puis laisse le modèle rédiger.
-function contextFor(q) {
-  const base = S.ai.ask(q, S.lastRefs);
-  let refs = base.refsRaw || [];
-  if (!refs.length) {
-    const [s, e] = range();
-    refs = S.articles.filter(a => a.published >= s && a.published < e && !S.hidden.has(a.sourceId))
-      .sort((a, b) => ORDER[b.level] - ORDER[a.level] || b.score - a.score).slice(0, 12);
-  }
-  return { base, refs: refs.slice(0, 12) };
-}
-const ctxText = refs => refs.map((a, i) => `[${i + 1}] ${LBL[a.level]} ${a.score}/100 | ${src(a.sourceId).name} | ${new Date(a.published).toLocaleDateString('fr-FR')}${a.france ? ' | concerne la France' : ''}${a.cves && a.cves.length ? ' | ' + a.cves.join(', ') : ''}\nTitre : ${a.title}\nRésumé : ${(a.summary || '').slice(0, 450)}`).join('\n\n');
-const refLinks = refs => refs.map(a => ({ link: a.link, title: a.title, source: src(a.sourceId).name }));
-
-async function answer(q, el, history) {
-  if (LLM.loading) { el.innerHTML = '<span class="muted small">L\'IA termine son chargement…</span>'; while (LLM.loading) await new Promise(r => setTimeout(r, 500)); }
-  const { base, refs } = contextFor(q);
-  if (base.refsRaw && base.refsRaw.length) S.lastRefs = base.refsRaw;
-  if (!LLM.engine) { el.innerHTML = md(base.answer, base.refs); return base.answer; }
-  S.lastRefs = refs;
-  const messages = [
-    { role: 'system', content: SYS },
-    ...history.slice(-2),
-    { role: 'user', content: userMsg(refs, q) },
-  ];
-  let out = '';
-  try {
-    const stream = await LLM.engine.chat.completions.create({ messages, stream: true, temperature: 0.2, max_tokens: 700 });
-    for await (const chunk of stream) {
-      out += chunk.choices[0]?.delta?.content || '';
-      el.innerHTML = md(out, refLinks(refs));
-    }
-  } catch (e) { el.innerHTML = md(base.answer, base.refs); return base.answer; }
-  el.innerHTML = md(out, refLinks(refs)) + `<div class="muted small" style="margin-top:6px">Sources : ${refs.length} articles de vos sources</div>`;
-  return out;
-}
-
-const chatHist = []; // en mémoire uniquement, effacé à la fermeture de la page
-async function ask(q) {
+function ask(q) {
   if (!q.trim()) return;
   open('aiDrawer'); addMsg('user', esc(q));
   const t = addMsg('bot', '<span class="typing"><span></span><span></span><span></span></span>');
-  const out = await answer(q, t, chatHist);
-  chatHist.push({ role: 'user', content: q }, { role: 'assistant', content: out });
+  setTimeout(() => { const r = S.ai.ask(q, S.lastRefs); if (r.refsRaw) S.lastRefs = r.refsRaw; t.innerHTML = md(r.answer, r.refs); }, 250);
 }
-const inlineHist = [];
-async function askInline(q) {
+function askInline(q) {
   if (!q.trim()) return;
+  const r = S.ai.ask(q, S.lastRefs);
+  if (r.refsRaw) S.lastRefs = r.refsRaw;
   const d = document.createElement('div'); d.className = 'qa';
-  d.innerHTML = `<div class="q">${ic('chevR')} ${esc(q)}</div><div class="a"><span class="typing"><span></span><span></span><span></span></span></div>`;
+  d.innerHTML = `<div class="q">${ic('chevR')} ${esc(q)}</div>${md(r.answer, r.refs)}`;
   $('#askOut').prepend(d);
-  const out = await answer(q, d.querySelector('.a'), inlineHist);
-  inlineHist.push({ role: 'user', content: q }, { role: 'assistant', content: out });
 }
-function brief() {
-  const since = Date.now() - $('#briefHours').value * 36e5;
-  const arts = S.articles.filter(a => a.published >= since).sort((a, b) => b.score - a.score).slice(0, 80);
-  const refs = arts.map(a => ({ link: a.link, title: a.title, source: src(a.sourceId).name }));
-  $('#btnBrief').textContent = 'Régénérer';
-  if (LLM.engine && arts.length) {
-    const top = arts.slice().sort((a, b) => ORDER[b.level] - ORDER[a.level] || b.score - a.score).slice(0, 12);
-    S.lastRefs = top; $('#briefBody').innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
-    const len = { court: 'en 5 puces maximum', standard: 'en un paragraphe de synthèse puis les points clés', detaille: 'de façon détaillée : menaces critiques, vulnérabilités à corriger, incidents, recommandations' }[$('#briefStyle').value];
-    LLM.engine.chat.completions.create({ messages: [{ role: 'system', content: SYS }, { role: 'user', content: userMsg(top, 'Fais le point sur les menaces de la période ' + len + '.') }], stream: true, temperature: 0.2, max_tokens: 800 })
-      .then(async stream => { let out = ''; for await (const c of stream) { out += c.choices[0]?.delta?.content || ''; $('#briefBody').innerHTML = md(out, refLinks(top)); } })
-      .catch(() => { $('#briefBody').innerHTML = md(S.ai.summary(arts, $('#briefStyle').value), refs); });
-    return;
-  }
-  $('#briefBody').innerHTML = md(S.ai.summary(arts, $('#briefStyle').value), refs) + `<div class="muted small" style="margin-top:8px">Basé sur ${arts.length} actualités</div>`;
+// Brief rédigé par l'IA sur les serveurs GitHub (data/brief.json)
+async function loadBrief() {
+  try { S.brief = await api('data/brief.json?t=' + Date.now()); } catch { S.brief = {}; }
+  showBrief();
+}
+function showBrief() {
+  const b = (S.brief || {})[$('#briefHours').value];
+  if (!b || !b.text) { $('#briefBody').innerHTML = '<span class="muted">Le brief sera rédigé lors de la prochaine collecte.</span>'; return; }
+  const byId = new Map(S.articles.map(a => [a.id, a]));
+  const refs = b.refs.map(id => byId.get(id)).filter(Boolean);
+  S.lastRefs = refs;
+  $('#briefBody').innerHTML = md(b.text, refs.map(a => ({ link: a.link, title: a.title, source: src(a.sourceId).name })))
+    + `<div class="muted small" style="margin-top:8px">${ic('spark')} Rédigé par l'IA sur les serveurs GitHub ${ago(b.at)} · à partir de ${refs.length} articles</div>`;
 }
 
 /* ---------- Alertes e-mail : interface de réglage ---------- */
@@ -439,8 +364,7 @@ function bind() {
   $('#chatForm').onsubmit = e => { e.preventDefault(); const q = $('#chatQ').value; $('#chatQ').value = ''; ask(q); };
   $('#chatQ').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#chatForm').requestSubmit(); } };
   $('#chatQ').oninput = e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; };
-  $('#btnBrief').onclick = brief;
-  loadLLM('standard');
+  $('#briefHours').onchange = showBrief;
   $('#askForm').onsubmit = e => { e.preventDefault(); askInline($('#askQ').value); $('#askQ').value = ''; };
 
   $('#btnAlerts').onclick = openMail;

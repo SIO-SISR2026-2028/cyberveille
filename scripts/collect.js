@@ -186,6 +186,13 @@ async function maybeMail(articles, state) {
   for (const a of articles) if (!a.lang && srcById[a.sourceId]?.region === 'fr') a.lang = 'fr';
   await translateBatch(articles.filter(a => !a.lang && srcById[a.sourceId]?.region === 'int'));
   for (const a of articles) a.france = isFrance(a, srcById[a.sourceId]);
+  // IA sur GitHub : analyses + briefs
+  const brief = readJSON(path.join(DATA, 'brief.json'), {});
+  let AI = { error: 'non lancée' };
+  try { AI = await require('./ai-github')({ articles, srcName, brief, root: ROOT, budgetMs: 200000 }); }
+  catch (e) { AI = { error: String(e.message).slice(0, 200) }; }
+  fs.writeFileSync(path.join(DATA, 'brief.json'), JSON.stringify(brief));
+  console.log('[ia]', JSON.stringify(AI));
 
   fs.writeFileSync(path.join(DATA, 'articles.json'), JSON.stringify(articles));
   // Archives par mois (conservées sans limite) : docs/data/archive/AAAA-MM.json
@@ -200,7 +207,7 @@ async function maybeMail(articles, state) {
   }
   const months = fs.readdirSync(ARCH).filter(f => /^\d{4}-\d{2}\.json$/.test(f)).map(f => f.slice(0, 7)).sort();
   fs.writeFileSync(path.join(DATA, 'meta.json'), JSON.stringify({
-    updated: Date.now(), months, trad: TRAD,
+    updated: Date.now(), months, trad: TRAD, ai: AI,
     sources: sources.map(({ feeds, ...s }) => ({ ...s, status: state.sources[s.id] || null })),
   }));
   console.log(`[collecte] ${fresh.length} nouveaux, ${articles.length} au total, ${Object.values(state.sources).filter(s => s.ok).length}/${sources.length} sources OK`);

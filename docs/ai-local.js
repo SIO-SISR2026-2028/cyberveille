@@ -60,6 +60,7 @@
       let out = `### ${a.title}\n**${LBL[a.level]} · ${a.score}/100** — ${srcName(a.sourceId)}, ${fmtDate(a.published)}${a.france ? ' — concerne la France' : ''}`;
       if (a.summary) out += `\n\n${a.summary}`;
       if (a.titleOrig) out += `\n\n**Texte original :** ${a.titleOrig}${a.summaryOrig ? ' — ' + a.summaryOrig : ''}`;
+      if (a.aiNote) out += `\n\n**Analyse IA :** ${a.aiNote}`;
       if (a.tags && a.tags.length) out += `\n\n**Caractéristiques :** ${a.tags.join(', ')}`;
       if (a.cves && a.cves.length) out += `\n**CVE :** ${a.cves.join(', ')}${a.cvss ? ' (CVSS ' + a.cvss + ')' : ''}`;
       const t = a.tags || [], reco = [];

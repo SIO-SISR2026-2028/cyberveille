@@ -20,7 +20,7 @@ concurrency:
 jobs:
   veille:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -36,7 +36,7 @@ jobs:
           path: |
             node_modules
             .cache/models
-          key: deps-${{ hashFiles('package.json') }}-opusmt
+          key: deps-${{ hashFiles('package.json') }}-opusmt-qwen
 
       - run: npm install --no-audit --no-fund
 
