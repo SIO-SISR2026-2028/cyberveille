@@ -141,20 +141,21 @@ async function maybeMail(articles, state) {
   if (cfg.gravite_minimale === 'info') cfg.gravite_minimale = 'faible';
   const { SMTP_USER, SMTP_PASS, MAIL_TO } = process.env;
   if (!cfg.actif || !SMTP_USER || !SMTP_PASS || !MAIL_TO) { console.log('[mail] désactivé ou secrets manquants'); return; }
-  if (!isDue(cfg, state)) return;
+  const TEST = process.env.TEST_MAIL === 'true';
+  if (!TEST && !isDue(cfg, state)) return;
 
   const since = cfg.frequence === 'instantane' ? (state.lastMail || Date.now() - 36e5) : (state.lastMail || Date.now() - 864e5);
-  const list = filterFor(cfg, articles.filter(a => a.fetched > since));
+  const list = TEST ? filterFor(cfg, articles.filter(a => Date.now() - a.published < 3 * 864e5)) : filterFor(cfg, articles.filter(a => a.fetched > since));
   const markSent = () => { state.lastMail = Date.now(); state.lastMailDate = parisNow().date; };
   if (!list.length) { if (cfg.frequence !== 'instantane') markSent(); console.log('[mail] rien à envoyer'); return; }
 
   const ai = LocalAI.create(() => list, sources);
   const resume = cfg.resume && cfg.resume !== 'aucun' ? ai.summary(list, cfg.resume) : '';
-  const titles = { instantane: 'Alerte', horaire: 'Point horaire', '6h': 'Point 6 h', quotidien: 'Digest quotidien', hebdomadaire: 'Digest hebdomadaire' };
+  const titles = { test: 'E-mail de test', instantane: 'Alerte', horaire: 'Point horaire', '6h': 'Point 6 h', quotidien: 'Digest quotidien', hebdomadaire: 'Digest hebdomadaire' };
   const site = process.env.SITE_URL || '';
   const html = `<!doctype html><html><body style="margin:0;background:#0b0e17;font-family:Segoe UI,Arial,sans-serif;color:#d6dbea">
    <div style="max-width:680px;margin:0 auto;padding:24px">
-    <div style="font-size:22px;font-weight:700;color:#fff">CyberVeille</div><div style="color:#8a93ad;margin-bottom:16px">${titles[cfg.frequence] || 'Digest'} — ${list.length} actus</div>
+    <div style="font-size:22px;font-weight:700;color:#fff">CyberVeille</div><div style="color:#8a93ad;margin-bottom:16px">${TEST ? 'E-mail de test' : (titles[cfg.frequence] || 'Digest')} — ${list.length} actus</div>
     ${resume ? `<div style="background:#161d30;border:1px solid #2a3350;border-radius:10px;padding:14px 16px;font-size:14px;line-height:1.55"><div style="font-weight:700;color:#fff;margin-bottom:6px">Synthèse</div>${md(resume)}</div>` : ''}
     ${list.map((a, i) => `<div style="background:#131a2a;border-left:4px solid ${COLOR[a.level]};border-radius:8px;padding:12px 14px;margin:10px 0">
       <div style="font-size:11px;color:#8a93ad"><b style="color:${COLOR[a.level]}">[${i + 1}] ${LABEL[a.level].toUpperCase()} · ${a.score}/100</b> — ${esc(srcName(a.sourceId))}</div>
@@ -164,10 +165,11 @@ async function maybeMail(articles, state) {
    </div></body></html>`;
 
   const top = list[0];
-  const subject = cfg.frequence === 'instantane' ? `[${LABEL[top.level]}] ${top.title}`.slice(0, 140) : `CyberVeille — ${titles[cfg.frequence]} : ${list.length} actus${list.some(a => a.level === 'critique') ? ' dont critiques' : ''}`;
+  const subject = TEST ? `CyberVeille — e-mail de test (${list.length} actus)` : cfg.frequence === 'instantane' ? `[${LABEL[top.level]}] ${top.title}`.slice(0, 140) : `CyberVeille — ${titles[cfg.frequence]} : ${list.length} actus${list.some(a => a.level === 'critique') ? ' dont critiques' : ''}`;
   const tx = nodemailer.createTransport({ host: process.env.SMTP_HOST || 'smtp.gmail.com', port: Number(process.env.SMTP_PORT) || 465, secure: true, auth: { user: SMTP_USER, pass: SMTP_PASS } });
   await tx.sendMail({ from: `CyberVeille <${SMTP_USER}>`, to: MAIL_TO, subject, html });
-  markSent();
+  if (!TEST) markSent();
+  state.lastTest = { at: Date.now(), ok: true, n: list.length };
   console.log('[mail] envoyé :', subject);
 }
 
@@ -215,7 +217,7 @@ async function maybeMail(articles, state) {
   }));
   console.log(`[collecte] ${fresh.length} nouveaux, ${articles.length} au total, ${Object.values(state.sources).filter(s => s.ok).length}/${sources.length} sources OK`);
 
-  try { await maybeMail(articles, state); } catch (e) { console.error('[mail] erreur :', e.message); }
+  try { await maybeMail(articles, state); } catch (e) { console.error('[mail] erreur :', e.message); if (process.env.TEST_MAIL === 'true') state.lastTest = { at: Date.now(), ok: false, error: String(e.message).slice(0, 200) }; }
   fs.writeFileSync(STATE, JSON.stringify(state, null, 1));
   process.exit(0);
 })();

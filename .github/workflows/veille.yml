@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "*/5 * * * *"    # toutes les 5 min (minimum autorisé par GitHub, qui peut retarder un peu)
   workflow_dispatch:         # bouton "Run workflow" pour lancer à la main
+    inputs:
+      test_mail:
+        description: "Envoyer un e-mail de test"
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths: ["docs/*.js", "docs/*.html", "docs/*.css", "config.json", "scripts/**", ".github/**"]
@@ -46,6 +51,7 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
+          TEST_MAIL: ${{ inputs.test_mail }}
           SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
 
       - name: Sauvegarde des données
