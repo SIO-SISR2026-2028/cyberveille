@@ -64,7 +64,7 @@
 
     <section class="panel">
       <h4>Impact géographique</h4>
-      <div class="seg" id="region"><button data-r="all" class="on">Toutes</button><button data-r="fr" title="Concerne la France"><span class="flag-fr"></span> France</button><button data-r="int" title="Hors France"><svg class="i"><use href="#i-globe"/></svg> Monde</button></div>
+      <div class="seg" id="region"><button data-r="fr" title="Uniquement ce qui concerne la France"><span class="flag-fr"></span> France</button><button data-r="all" class="on" title="Tout, France incluse"><svg class="i"><use href="#i-globe"/></svg> Monde</button></div>
     </section>
 
     <section class="panel">
@@ -129,31 +129,10 @@
 <!-- Alertes e-mail -->
 <div class="modal" id="mailModal" aria-hidden="true">
   <div class="modal-card">
-    <div class="drawer-head"><div><b><svg class="i"><use href="#i-mail"/></svg> Alertes e-mail</b><small id="mailSub">Choisissez ce que vous recevez, et quand.</small></div><button class="icon-btn" data-close="mailModal"><svg class="i"><use href="#i-x"/></svg></button></div>
-
-    <!-- Étape connexion (une seule fois) -->
-    <div class="form" id="connectBox" hidden>
+    <div class="drawer-head"><div><b><svg class="i"><use href="#i-mail"/></svg> Alertes e-mail</b><small id="mailSub">Envoyées à votre adresse (enregistrée de façon privée, jamais affichée).</small></div><button class="icon-btn" data-close="mailModal"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <form id="mailForm" class="form">
       <div class="set-section">
-        <h4><svg class="i"><use href="#i-lock"/></svg> Connexion à votre dépôt (une seule fois)</h4>
-        <p class="muted small">Le site est hébergé gratuitement sans serveur : pour enregistrer vos réglages, il a besoin d'une clé d'accès limitée à <b>ce dépôt uniquement</b>. Elle reste dans <b>ce navigateur</b>, rien n'est envoyé ailleurs qu'à GitHub.</p>
-        <ol class="steps small">
-          <li><a id="tokLink" target="_blank">Créer la clé sur GitHub</a></li>
-          <li><b>Repository access</b> → <i>Only select repositories</i> → <code id="repoName">cyberveille</code></li>
-          <li><b>Permissions</b> → Repository : <b>Contents</b>, <b>Secrets</b> et <b>Actions</b> → <i>Read and write</i></li>
-          <li>Expiration : au choix (ex. 1 an) → <b>Generate token</b> → copiez-la ci-dessous</li>
-        </ol>
-        <label>Clé d'accès (github_pat_…)<input id="tokIn" type="password" autocomplete="off" placeholder="github_pat_..."></label>
-        <div class="form-actions" style="margin-top:10px"><button class="btn primary" id="tokSave">Connecter</button></div>
-      </div>
-    </div>
-
-    <!-- Réglages -->
-    <form id="mailForm" class="form" hidden>
-      <div class="set-section">
-        <h4>Destinataire</h4>
-        <label>Votre adresse e-mail<input type="email" id="mEmail" placeholder="vous@exemple.fr"></label>
-        <p class="small muted" id="emailState"></p>
-        <label class="switch"><input type="checkbox" id="mActive"> Recevoir les alertes</label>
+        <label class="switch"><input type="checkbox" id="mActive"> Recevoir les alertes par e-mail</label>
       </div>
       <div class="set-section">
         <h4>Fréquence</h4>
@@ -171,8 +150,8 @@
       <div class="set-section">
         <h4>Quelles menaces ?</h4>
         <div class="form" style="padding:0">
-          <label>Gravité minimale<select id="mLevel"><option value="faible">Toutes les menaces</option><option value="moyen">Moyen et +</option><option value="eleve">Élevé et +</option><option value="critique">Critique uniquement</option></select></label>
-          <label>Zone<select id="mRegion"><option value="toutes">France + monde</option><option value="france">Concerne la France uniquement</option></select></label>
+          <label>Me prévenir à partir de<select id="mLevel"><option value="faible">Toutes les menaces</option><option value="moyen">Moyen et +</option><option value="eleve">Élevé et +</option><option value="critique">Critique uniquement</option></select></label>
+          <label>Zone<select id="mRegion"><option value="toutes">Monde (France incluse)</option><option value="france">France uniquement</option></select></label>
           <label>Nombre max par e-mail<input type="number" id="mMax" min="5" max="50" value="20"></label>
           <label>Résumé IA en tête<select id="mStyle"><option value="aucun">Aucun</option><option value="court">Court</option><option value="standard">Standard</option><option value="detaille">Détaillé</option></select></label>
           <label class="full">Mots-clés (optionnel, séparés par des virgules)<input id="mKw" placeholder="ex. Fortinet, ransomware, santé"></label>
@@ -180,20 +159,8 @@
         <p class="small muted" style="margin:10px 0 6px">Sources (aucune sélection = toutes)</p>
         <div class="chips" id="mSources"></div>
       </div>
-      <details class="set-section">
-        <summary>Expéditeur Gmail (à faire une fois)</summary>
-        <p class="small muted">Créez un <a href="https://myaccount.google.com/apppasswords" target="_blank">mot de passe d'application Google</a> (validation en 2 étapes requise). Ils sont stockés chiffrés dans les Secrets GitHub, jamais lisibles.</p>
-        <div class="form" style="padding:0">
-          <label>Adresse Gmail expéditrice<input type="email" id="mFrom" placeholder="vous@gmail.com"></label>
-          <label>Mot de passe d'application<input type="password" id="mPass" placeholder="16 lettres" autocomplete="new-password"></label>
-        </div>
-        <p class="small" id="smtpState"></p>
-      </details>
-      <div class="full form-actions">
-        <button type="button" class="btn danger" id="mUnsub">Supprimer mon adresse</button>
-        <button type="button" class="btn ghost" id="mDisconnect">Déconnecter ce navigateur</button>
-        <button class="btn primary" id="mSubmit">Enregistrer</button>
-      </div>
+      <p class="full small muted">En cliquant sur Enregistrer, GitHub s'ouvre avec vos réglages déjà remplis : cliquez sur <b>Create</b> pour valider. Seul votre compte peut modifier ces réglages.</p>
+      <div class="full form-actions"><button class="btn primary" id="mSubmit">Enregistrer</button></div>
     </form>
   </div>
 </div>

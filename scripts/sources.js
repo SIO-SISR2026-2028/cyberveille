@@ -12,8 +12,6 @@ module.exports = [
     feeds: ['https://www.cybermalveillance.gouv.fr/feed/atom-flux-actualites', 'https://www.cybermalveillance.gouv.fr/feed/atom-flux-alertes'] },
   { id: 'cnil', name: 'CNIL', url: 'https://www.cnil.fr/', region: 'fr', type: 'officiel', weight: 12,
     feeds: ['https://www.cnil.fr/fr/rss.xml'] },
-  { id: 'cybergend', name: 'CyberGEND', url: 'https://www.gendarmerie.interieur.gouv.fr/', region: 'fr', type: 'officiel', weight: 12,
-    feeds: ['https://www.gendarmerie.interieur.gouv.fr/rss', 'https://www.gendarmerie.interieur.gouv.fr/gendinfo/rss'] },
 
   // 🇫🇷 Médias spécialisés
   { id: 'zataz', name: 'ZATAZ', url: 'https://www.zataz.com/', region: 'fr', type: 'media', weight: 8, feeds: ['https://www.zataz.com/feed/'] },
@@ -26,7 +24,6 @@ module.exports = [
   { id: 'lmi', name: 'Le Monde Informatique', url: 'https://www.lemondeinformatique.fr/', region: 'fr', type: 'media', weight: 6, feeds: ['https://www.lemondeinformatique.fr/flux-rss/thematique/securite/rss.xml', 'https://www.lemondeinformatique.fr/flux-rss/rss.xml'] },
   { id: 'itconnect', name: 'IT-Connect', url: 'https://www.it-connect.fr/', region: 'fr', type: 'media', weight: 7, feeds: ['https://www.it-connect.fr/feed/'] },
   { id: 'zdnetfr', name: 'ZDNet France', url: 'https://www.zdnet.fr/', region: 'fr', type: 'media', weight: 6, feeds: ['https://www.zdnet.fr/feeds/rss/actualites/', 'https://www.zdnet.fr/feeds/rss/'] },
-  { id: 'riskintel', name: 'RiskIntel', url: 'https://www.riskintel.fr/', region: 'fr', type: 'media', weight: 6, feeds: ['https://www.riskintel.fr/feed/', 'https://riskintel.fr/feed/', 'https://www.riskintel.fr/rss/', 'https://www.riskintel.fr/index.xml'] },
 
   // 🌍 International
   { id: 'bleeping', name: 'BleepingComputer', url: 'https://www.bleepingcomputer.com/', region: 'int', type: 'media', weight: 9, feeds: ['https://www.bleepingcomputer.com/feed/'] },

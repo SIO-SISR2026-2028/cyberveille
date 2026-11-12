@@ -12,7 +12,7 @@ const store = { get(k, d) { try { return JSON.parse(localStorage.getItem('cv_' +
 
 const S = {
   meta: null, articles: [], pending: [], freshIds: new Set(), chatHistory: [], lastRefs: [],
-  pmode: store.get('pmode', 'week'), anchor: new Date(), loadedMonths: new Set(), view: store.get('view3', 'priority'), region: store.get('region', 'all'),
+  pmode: store.get('pmode', 'week'), anchor: new Date(), loadedMonths: new Set(), view: store.get('view3', 'priority'), region: (r => r === 'fr' ? 'fr' : 'all')(store.get('region', 'all')),
   levels: new Set(store.get('levels', LVLS).filter(l => l !== 'info')), hidden: new Set(store.get('hidden', [])), q: '',
   ai: null,
 };
@@ -294,85 +294,34 @@ async function askInline(q) {
   const out = await answer(q, d.querySelector('.a'), inlineHist);
   inlineHist.push({ role: 'user', content: q }, { role: 'assistant', content: out });
 }
-/* ---------- Alertes e-mail : interface de réglage ---------- */
-async function gh(path, opts = {}) {
-  const tok = store.get('ghToken', null);
-  const r = await fetch('https://api.github.com/repos/' + REPO + path, {
-    method: opts.method || 'GET',
-    headers: { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
-  if (r.status === 404 && opts.allow404) return null;
-  if (!r.ok) {
-    const j = await r.json().catch(() => ({}));
-    if (r.status === 401) throw new Error('Clé invalide ou expirée');
-    if (r.status === 403) throw new Error('Permission manquante sur la clé (Contents, Secrets et Actions en lecture/écriture)');
-    throw new Error(j.message || 'GitHub ' + r.status);
-  }
-  return r.status === 204 ? {} : r.json().catch(() => ({}));
-}
-const b64 = { enc: s => btoa(unescape(encodeURIComponent(s))), dec: s => decodeURIComponent(escape(atob(s.replace(/\n/g, '')))) };
-let sodium = null;
-async function setSecret(name, value) {
-  if (!sodium) { sodium = (await import('https://esm.sh/libsodium-wrappers@0.7.13')).default; await sodium.ready; }
-  const { key, key_id } = await gh('/actions/secrets/public-key');
-  const enc = sodium.crypto_box_seal(sodium.from_string(value), sodium.from_base64(key, sodium.base64_variants.ORIGINAL));
-  await gh('/actions/secrets/' + name, { method: 'PUT', body: { encrypted_value: sodium.to_base64(enc, sodium.base64_variants.ORIGINAL), key_id } });
-}
-const hasSecret = async n => !!(await gh('/actions/secrets/' + n, { allow404: true }));
-const mask = e => e.replace(/^(.{2}).*(@.*)$/, '$1•••$2');
-let CFG = null, CFG_SHA = null;
-async function saveCfg(msg) {
-  const r = await gh('/contents/config.json', { method: 'PUT', body: { message: msg, content: b64.enc(JSON.stringify(CFG, null, 2) + '\n'), sha: CFG_SHA } });
-  CFG_SHA = r.content && r.content.sha;
-}
+/* ---------- Alertes e-mail : réglages (validés via une demande GitHub, sans clé) ---------- */
+let CFG = null;
 function syncFreq() { const f = $('#mFreq').value; $('#lHour').style.display = ['quotidien', 'hebdomadaire'].includes(f) ? '' : 'none'; $('#lDay').style.display = f === 'hebdomadaire' ? '' : 'none'; }
 async function openMail() {
   open('mailModal');
-  const tok = store.get('ghToken', null);
-  $('#connectBox').hidden = !!tok; $('#mailForm').hidden = !tok;
-  $('#repoName').textContent = REPO;
-  $('#tokLink').href = 'https://github.com/settings/personal-access-tokens/new';
-  if (!tok) { $('#mailSub').textContent = 'Connexion à votre dépôt requise une seule fois.'; return; }
-  $('#mailSub').textContent = 'Chargement des réglages…';
-  try {
-    const f = await gh('/contents/config.json');
-    CFG = JSON.parse(b64.dec(f.content)); CFG_SHA = f.sha;
-    const c = CFG.email || {};
-    $('#mActive').checked = c.actif !== false; $('#mFreq').value = c.frequence || 'quotidien';
-    $('#mHour').value = c.heure || '08:00'; $('#mDay').value = c.jour_semaine ?? 1;
-    $('#mLevel').value = c.gravite_minimale === 'info' ? 'faible' : (c.gravite_minimale || 'moyen');
-    $('#mRegion').value = c.zone === 'france' ? 'france' : 'toutes'; $('#mMax').value = c.max_actus || 20;
-    $('#mStyle').value = c.resume || 'standard'; $('#mKw').value = (c.mots_cles || []).join(', ');
-    $('#mSources').innerHTML = S.meta.sources.map(s => `<span class="chip ${(c.sources || []).includes(s.id) ? 'on' : ''}" data-id="${s.id}">${esc(s.name)}</span>`).join('');
-    $('#mEmail').value = '';
-    const [mail, su, sp] = await Promise.all([hasSecret('MAIL_TO'), hasSecret('SMTP_USER'), hasSecret('SMTP_PASS')]);
-    $('#emailState').innerHTML = mail ? `<span class="status-ok">${ic('check')} Adresse enregistrée : ${esc(c.adresse_masquee || '••••')}</span> — saisissez-en une autre pour la remplacer.` : `<span class="status-ko">${ic('alert')} Aucune adresse enregistrée.</span>`;
-    $('#smtpState').innerHTML = su && sp ? `<span class="status-ok">${ic('check')} Expéditeur configuré</span>` : `<span class="status-ko">${ic('alert')} Expéditeur non configuré : les e-mails ne peuvent pas partir.</span>`;
-    if (!(su && sp)) $('#smtpState').closest('details').open = true;
-    $('#mailSub').textContent = "Les changements s'appliquent dès la prochaine collecte (≤ 5 min).";
-    syncFreq();
-  } catch (e) { $('#mailSub').textContent = e.message; if (/invalide/.test(e.message)) { store.set('ghToken', null); openMail(); } }
+  try { CFG = await api('https://raw.githubusercontent.com/' + REPO + '/main/config.json?t=' + Date.now()); } catch { CFG = CFG || {}; }
+  const c = Object.assign({}, CFG.email || {}, store.get('pendingCfg', null) || {});
+  $('#mActive').checked = c.actif !== false; $('#mFreq').value = c.frequence || 'quotidien';
+  $('#mHour').value = c.heure || '08:00'; $('#mDay').value = c.jour_semaine ?? 1;
+  $('#mLevel').value = c.gravite_minimale === 'info' ? 'faible' : (c.gravite_minimale || 'moyen');
+  $('#mRegion').value = c.zone === 'france' ? 'france' : 'toutes'; $('#mMax').value = c.max_actus || 20;
+  $('#mStyle').value = c.resume || 'standard'; $('#mKw').value = (c.mots_cles || []).join(', ');
+  $('#mSources').innerHTML = S.meta.sources.map(s => `<span class="chip ${(c.sources || []).includes(s.id) ? 'on' : ''}" data-id="${s.id}">${esc(s.name)}</span>`).join('');
+  syncFreq();
 }
-async function saveMail(e) {
+function saveMail(e) {
   e.preventDefault();
-  const btn = $('#mSubmit'); btn.disabled = true; btn.textContent = 'Enregistrement…';
-  try {
-    const email = $('#mEmail').value.trim(), from = $('#mFrom').value.trim(), pass = $('#mPass').value.replace(/\s/g, '');
-    if (email) await setSecret('MAIL_TO', email);
-    if (from) await setSecret('SMTP_USER', from);
-    if (pass) await setSecret('SMTP_PASS', pass);
-    CFG.email = Object.assign({}, CFG.email || {}, {
-      actif: $('#mActive').checked, frequence: $('#mFreq').value, heure: $('#mHour').value, jour_semaine: +$('#mDay').value,
-      gravite_minimale: $('#mLevel').value, zone: $('#mRegion').value, max_actus: +$('#mMax').value, resume: $('#mStyle').value,
-      mots_cles: $('#mKw').value.split(',').map(s => s.trim()).filter(Boolean),
-      sources: $$('#mSources .chip.on').map(c => c.dataset.id),
-    }, email ? { adresse_masquee: mask(email) } : {});
-    await saveCfg('Réglages des alertes (depuis le site)');
-    $('#mEmail').value = $('#mFrom').value = $('#mPass').value = '';
-    toast('Réglages enregistrés'); closeAll();
-  } catch (err) { toast(err.message); }
-  btn.disabled = false; btn.textContent = 'Enregistrer';
+  const p = {
+    actif: $('#mActive').checked, frequence: $('#mFreq').value, heure: $('#mHour').value, jour_semaine: +$('#mDay').value,
+    gravite_minimale: $('#mLevel').value, zone: $('#mRegion').value, max_actus: +$('#mMax').value, resume: $('#mStyle').value,
+    mots_cles: $('#mKw').value.split(',').map(s => s.trim()).filter(Boolean),
+    sources: $$('#mSources .chip.on').map(c => c.dataset.id),
+  };
+  store.set('pendingCfg', p);
+  const body = 'Réglages envoyés depuis le site. Cliquez sur **Create** pour les appliquer.\n\n```json\n' + JSON.stringify(p, null, 2) + '\n```';
+  window.open(`https://github.com/${REPO}/issues/new?title=${encodeURIComponent('Réglages CyberVeille')}&body=${encodeURIComponent(body)}`, '_blank');
+  toast('Validez sur GitHub (bouton Create) pour appliquer vos réglages');
+  closeAll();
 }
 
 /* ---------- Events ---------- */
@@ -409,14 +358,7 @@ function bind() {
     if (act === 'copy') navigator.clipboard.writeText(a.link).then(() => toast('Lien copié'));
   };
   $('#newBanner').onclick = flushPending;
-  $('#btnRefresh').onclick = async () => {
-    if (!store.get('ghToken', null)) { poll(true); return; }
-    try {
-      await gh('/actions/workflows/veille.yml/dispatches', { method: 'POST', body: { ref: 'main' } });
-      toast('Collecte lancée : nouvelles actus dans 1 à 2 minutes');
-      let n = 0; const t = setInterval(() => { poll(false); if (++n >= 6) clearInterval(t); }, 30000);
-    } catch (e) { toast(e.message); poll(true); }
-  };
+  $('#btnRefresh').onclick = () => poll(true);
 
   $('#btnAI').onclick = () => { open('aiDrawer'); setTimeout(() => $('#chatQ').focus(), 300); };
   $('#suggest').onclick = e => e.target.tagName === 'BUTTON' && ask(e.target.textContent);
@@ -433,21 +375,8 @@ function bind() {
   $('#mFreq').onchange = syncFreq;
   $('#mSources').onclick = e => e.target.classList.contains('chip') && e.target.classList.toggle('on');
   $('#mailForm').onsubmit = saveMail;
-  $('#tokSave').onclick = async () => {
-    const t = $('#tokIn').value.trim(); if (!t) return;
-    store.set('ghToken', t); $('#tokIn').value = '';
-    try { await gh(''); toast('Connecté'); openMail(); } catch (e) { store.set('ghToken', null); toast(e.message); }
-  };
-  $('#mDisconnect').onclick = () => { store.set('ghToken', null); toast('Clé retirée de ce navigateur'); closeAll(); };
-  $('#mUnsub').onclick = async () => {
-    if (!confirm('Supprimer votre adresse ? Plus aucun e-mail ne sera envoyé.')) return;
-    try {
-      await gh('/actions/secrets/MAIL_TO', { method: 'DELETE', allow404: true });
-      CFG.email = Object.assign({}, CFG.email, { actif: false }); delete CFG.email.adresse_masquee;
-      await saveCfg('Désabonnement (depuis le site)');
-      toast('Adresse supprimée'); closeAll();
-    } catch (e) { toast(e.message); }
-  };
+
+
 }
 
 /* ---------- Boot ---------- */
