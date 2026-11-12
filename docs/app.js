@@ -209,7 +209,7 @@ function addMsg(cls, html) { const d = document.createElement('div'); d.classNam
 /* ---------- Chat IA en direct : Pollinations.ai (startup open source, Berlin) ----------
    Modèle GPT-OSS 20B hébergé chez OVH (France). Sans compte, sans clé, mode "private" (non stocké).
    Seuls la question et les articles publics servant de contexte sont envoyés. */
-const SYS = `Tu es l'analyste de veille cybersécurité du site CyberVeille. Tu réponds UNIQUEMENT à partir des articles d'actualité publics fournis. N'invente aucun fait, date, CVE ou chiffre ; si l'information n'y est pas, dis-le. Cite les articles avec leur numéro entre crochets, ex. [2]. Réponds en français, clairement et brièvement, avec des listes à puces si utile, et des recommandations concrètes quand c'est pertinent.`;
+const SYS = `Tu es l'analyste de veille cybersécurité du site CyberVeille. Tu réponds UNIQUEMENT à partir des articles d'actualité publics fournis. N'invente aucun fait, date, CVE ou chiffre ; si l'information n'y est pas, dis-le. Cite les articles avec leur numéro entre crochets, ex. [2]. Réponds en français, clairement et brièvement, avec des listes à puces (jamais de tableau), et des recommandations concrètes quand c'est pertinent.`;
 function contextFor(q) {
   const base = S.ai.ask(q, S.lastRefs);
   let refs = base.refsRaw || [];
