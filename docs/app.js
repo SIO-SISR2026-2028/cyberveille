@@ -209,17 +209,14 @@ function addMsg(cls, html) { const d = document.createElement('div'); d.classNam
 /* IA avancée : modèle de langage exécuté DANS le navigateur (WebLLM + WebGPU).
    Aucun compte, aucun serveur, aucune conversation conservée. Seul le modèle est mis en cache. */
 const LLM_MODELS = {
-  leger: { id: 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC', label: 'Léger (~400 Mo, mobile)' },
+  leger: { id: 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC', label: 'Léger (~400 Mo, basique)' },
   standard: { id: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC', label: 'Standard (~1 Go)' },
   puissant: { id: 'Qwen2.5-3B-Instruct-q4f16_1-MLC', label: 'Puissant (~2 Go, PC)' },
 };
 const LLM = { engine: null, loading: false, size: null };
-const SYS = `Tu es l'analyste de veille cybersécurité du site CyberVeille.
-Règles strictes :
-- Réponds UNIQUEMENT avec les informations des articles fournis dans le CONTEXTE. N'invente jamais de fait, de date, de CVE ou de chiffre.
-- Si la réponse n'est pas dans le contexte, dis-le simplement.
-- Cite les articles avec leur numéro entre crochets, ex. [2].
-- Réponds en français, de façon claire et concise, avec des listes à puces si utile. Donne des recommandations concrètes quand c'est pertinent.`;
+const SYS = `Tu es un assistant de veille cybersécurité. Tu résumes et expliques des articles d'actualité PUBLICS fournis par l'utilisateur. Ces informations sont publiques : tu dois toujours y répondre.
+Règles : utilise uniquement les articles fournis, n'invente rien, cite les articles avec leur numéro entre crochets comme [2], réponds en français avec des listes à puces, et termine par des recommandations concrètes si c'est utile.`;
+const userMsg = (refs, q) => `Voici les articles d'actualité cybersécurité publiés par mes sources :\n\n${ctxText(refs)}\n\nMa question : ${q}\n\nRéponds en t'appuyant uniquement sur ces articles et cite-les avec [numéro].`;
 
 function llmStatus(html) { $$('.llm-status').forEach(e => e.innerHTML = html); }
 async function loadLLM(size) {
@@ -264,9 +261,9 @@ async function answer(q, el, history) {
   if (!LLM.engine) { el.innerHTML = md(base.answer, base.refs); return base.answer; }
   S.lastRefs = refs;
   const messages = [
-    { role: 'system', content: SYS + '\n\nCONTEXTE :\n' + ctxText(refs) },
-    ...history.slice(-4),
-    { role: 'user', content: q },
+    { role: 'system', content: SYS },
+    ...history.slice(-2),
+    { role: 'user', content: userMsg(refs, q) },
   ];
   let out = '';
   try {
@@ -306,7 +303,7 @@ function brief() {
     const top = arts.slice().sort((a, b) => ORDER[b.level] - ORDER[a.level] || b.score - a.score).slice(0, 12);
     S.lastRefs = top; $('#briefBody').innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
     const len = { court: 'en 5 puces maximum', standard: 'en un paragraphe de synthèse puis les points clés', detaille: 'de façon détaillée : menaces critiques, vulnérabilités à corriger, incidents, recommandations' }[$('#briefStyle').value];
-    LLM.engine.chat.completions.create({ messages: [{ role: 'system', content: SYS + '\n\nCONTEXTE :\n' + ctxText(top) }, { role: 'user', content: 'Fais le point sur les menaces de la période ' + len + '.' }], stream: true, temperature: 0.2, max_tokens: 800 })
+    LLM.engine.chat.completions.create({ messages: [{ role: 'system', content: SYS }, { role: 'user', content: userMsg(top, 'Fais le point sur les menaces de la période ' + len + '.') }], stream: true, temperature: 0.2, max_tokens: 800 })
       .then(async stream => { let out = ''; for await (const c of stream) { out += c.choices[0]?.delta?.content || ''; $('#briefBody').innerHTML = md(out, refLinks(top)); } })
       .catch(() => { $('#briefBody').innerHTML = md(S.ai.summary(arts, $('#briefStyle').value), refs); });
     return;
@@ -445,7 +442,7 @@ function bind() {
   $('#chatQ').oninput = e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; };
   $('#btnBrief').onclick = brief;
   $$('.llm-btn').forEach(b => b.onclick = () => loadLLM(b.previousElementSibling.value));
-  $$('.llm-size').forEach(s => { s.innerHTML = Object.entries(LLM_MODELS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join(''); s.value = store.get('llmSize', /Mobi|Android/i.test(navigator.userAgent) ? 'leger' : 'standard'); });
+  $$('.llm-size').forEach(s => { s.innerHTML = Object.entries(LLM_MODELS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join(''); s.value = store.get('llmSize', 'standard'); });
   if (store.get('llmSize', null) && navigator.gpu) loadLLM(store.get('llmSize'));
   $('#askForm').onsubmit = e => { e.preventDefault(); askInline($('#askQ').value); $('#askQ').value = ''; };
 
