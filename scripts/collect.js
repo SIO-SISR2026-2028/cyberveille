@@ -17,14 +17,14 @@ const readJSON = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8'))
 const RETENTION_DAYS = 45;
 
 const UA = 'Mozilla/5.0 (CyberVeille RSS aggregator)';
-const parser = new Parser({ timeout: 20000, headers: { 'User-Agent': UA, Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*' } });
+const parser = new Parser({ timeout: 10000, headers: { 'User-Agent': UA, Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*' } });
 
 const stripHtml = (s = '') => s.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ')
   .replace(/&nbsp;/g, ' ').replace(/&#8217;|&rsquo;/g, "'").replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'")
   .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#\d+;/g, ' ').replace(/\s+/g, ' ').trim();
 
 async function discoverFeed(siteUrl) {
-  const html = await (await fetch(siteUrl, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(20000) })).text();
+  const html = await (await fetch(siteUrl, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(10000) })).text();
   for (const m of html.matchAll(/<link[^>]+type=["']application\/(rss|atom)\+xml["'][^>]*>/gi)) {
     const href = (m[0].match(/href=["']([^"']+)["']/i) || [])[1];
     if (href) return new URL(href, siteUrl).toString();
@@ -131,7 +131,7 @@ async function maybeMail(articles, state) {
   const state = readJSON(STATE, { sources: {} });
   let articles = readJSON(path.join(DATA, 'articles.json'), []);
   const known = new Set(articles.map(a => a.id));
-  const results = await Promise.allSettled(sources.map(s => fetchSource(s, state, known)));
+  const results = await Promise.allSettled(sources.map(s => Promise.race([fetchSource(s, state, known), new Promise((_, rej) => setTimeout(() => { state.sources[s.id] = { ...(state.sources[s.id] || {}), ok: false, lastCheck: Date.now(), lastError: 'Délai dépassé' }; rej(new Error('timeout')); }, 40000))])));
   const fresh = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
   const cutoff = Date.now() - RETENTION_DAYS * 864e5;
   articles = [...fresh, ...articles].filter(a => a.published >= cutoff).sort((a, b) => b.published - a.published);
@@ -145,4 +145,5 @@ async function maybeMail(articles, state) {
 
   try { await maybeMail(articles, state); } catch (e) { console.error('[mail] erreur :', e.message); }
   fs.writeFileSync(STATE, JSON.stringify(state, null, 1));
+  process.exit(0);
 })();
