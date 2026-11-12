@@ -148,8 +148,8 @@ function renderStats() {
   const today = base.filter(a => Date.now() - a.published < 864e5).length;
   $('#stats').innerHTML = [
     ['critique', c('critique'), 'Critiques'], ['eleve', c('eleve'), 'Élevées'], ['moyen', c('moyen'), 'Moyennes'],
-    ['acc', base.filter(a => a.france && ORDER[a.level] >= 3).length, 'Graves en France'], ['faible', S.meta.sources.filter(s => s.status?.ok).length + '/' + S.meta.sources.length, 'Sources actives'],
-  ].map(([k, v, l]) => `<div class="stat" data-lvl="${k}" style="--c:var(--${k})"><b>${v}</b><span>${l}</span></div>`).join('');
+    ['acc', base.filter(a => a.france && ORDER[a.level] >= 3).length, 'Graves en France'], ['faible', S.meta.sources.filter(s => s.status?.ok).length + '/' + S.meta.sources.length, 'Sources joignables'],
+  ].map(([k, v, l]) => `<div class="stat" data-lvl="${k}" style="--c:var(--${k})" ${l === 'Sources joignables' ? `title="${esc(S.meta.sources.filter(s => !s.status?.ok).map(s => s.name + ' : ' + (s.status?.lastError || 'en attente')).join('\n') || 'Toutes les sources répondent')}"` : ''}><b>${v}</b><span>${l}</span></div>`).join('');
 }
 function renderSidebarCounts() {
   const [since, until] = range(), recent = S.articles.filter(a => a.published >= since && a.published < until);
