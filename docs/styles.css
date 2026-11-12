@@ -177,3 +177,13 @@ select:focus,input:focus,textarea:focus{border-color:var(--acc)}
 
 .steps{padding-left:18px;line-height:1.7;color:var(--txt)}.steps li{margin:6px 0}code{font:12px ui-monospace,Menlo,Consolas,monospace;background:var(--bg2);padding:1px 5px;border-radius:5px}
 .cfg{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;color:var(--txt)}.cfg span{color:var(--mut)}
+.fr-badge{font-size:11px;font-weight:700;color:#8fb3ff;background:#3b6cff22;border:1px solid #3b6cff55;padding:1px 7px;border-radius:20px}
+.tr{font-size:11px;color:var(--mut);border:1px dashed var(--line);padding:1px 6px;border-radius:20px}
+.orig{margin-top:6px;font-size:12.5px;color:var(--mut);border-left:2px solid var(--line);padding-left:8px}
+.periodbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.periodbar .seg{min-width:250px}
+.pnav{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px}
+.pnav b{min-width:200px;text-align:center;font-size:14px}
+.pnav .icon-btn{font-size:20px;line-height:1;transition:background .2s}.pnav .icon-btn:hover{background:var(--line)}
+.pnav .icon-btn:disabled{opacity:.3;cursor:default}
+@media (max-width:860px){.periodbar{gap:8px}.periodbar .seg{flex:1 1 100%;min-width:0}.pnav{flex:1;justify-content:space-between}.pnav b{min-width:0;font-size:13px}.tabs{width:100%}.tabs button{flex:1;padding:7px 4px;font-size:12px}}

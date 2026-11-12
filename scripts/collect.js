@@ -55,6 +55,41 @@ async function fetchSource(src, state, known) {
   return fresh;
 }
 
+// ---------- France ----------
+const FR_RE = /\b(france|fran[çc]ais(e|es)?|french|hexagone|paris|lyon|marseille|toulouse|bordeaux|lille|nantes|strasbourg|rennes|bretagne|normandie|occitanie|[îi]le-de-france|outre-mer|anssi|cnil|cert-fr|cybermalveillance|gendarmerie|minist[èe]re|[ée]lys[ée]e|gouv\.fr|orange|sfr|bouygues|free mobile|la poste|sncf|edf|engie|ameli|france travail|p[ôo]le emploi|caf|urssaf|cpam|doctolib|leclerc|carrefour|auchan|fnac|darty|decathlon|thales|airbus|safran|dassault|naval group|atos|capgemini|sopra|mairie|commune|d[ée]partement|r[ée]gion|h[ôo]pital|chu|clinique|coll[èe]ge|lyc[ée]e|universit[ée])\b/i;
+function isFrance(a, src) {
+  if (src && src.region === 'fr' && src.type === 'officiel') return true;
+  const t = `${a.titleOrig || a.title} ${a.summaryOrig || a.summary}`;
+  if (src && src.region === 'int') return /\b(france|french|paris)\b/i.test(t);
+  return FR_RE.test(t);
+}
+
+// ---------- Traduction (titres et résumés publics uniquement) ----------
+async function translate(text) {
+  if (!text) return text;
+  const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=fr&dt=t&q=' + encodeURIComponent(text.slice(0, 1500));
+  const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+  if (!r.ok) throw new Error('trad ' + r.status);
+  const j = await r.json();
+  if (j[2] === 'fr') return null; // déjà en français
+  return j[0].map(x => x[0]).join('');
+}
+async function translateBatch(list, max = 80) {
+  let n = 0;
+  for (const a of list) {
+    if (n >= max) break;
+    if (a.lang) continue;
+    try {
+      const t = await translate(a.title);
+      if (t === null) { a.lang = 'fr'; continue; }
+      const sm = a.summary ? await translate(a.summary) : '';
+      a.titleOrig = a.title; a.summaryOrig = a.summary;
+      a.title = t; a.summary = sm || a.summary; a.lang = 'en'; n++;
+    } catch (e) { console.warn('[trad]', e.message); break; }
+  }
+  console.log(`[trad] ${n} articles traduits`);
+}
+
 // ---------- E-mail ----------
 const ORDER = { info: 0, faible: 1, moyen: 2, eleve: 3, critique: 4 };
 const LABEL = { critique: 'Critique', eleve: 'Élevé', moyen: 'Moyen', faible: 'Faible', info: 'Info' };
@@ -135,10 +170,25 @@ async function maybeMail(articles, state) {
   const fresh = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
   const cutoff = Date.now() - RETENTION_DAYS * 864e5;
   articles = [...fresh, ...articles].filter(a => a.published >= cutoff).sort((a, b) => b.published - a.published);
+  const srcById = Object.fromEntries(sources.map(s => [s.id, s]));
+  for (const a of articles) if (!a.lang && srcById[a.sourceId]?.region === 'fr') a.lang = 'fr';
+  await translateBatch(articles.filter(a => !a.lang));
+  for (const a of articles) a.france = isFrance(a, srcById[a.sourceId]);
 
   fs.writeFileSync(path.join(DATA, 'articles.json'), JSON.stringify(articles));
+  // Archives par mois (conservées sans limite) : docs/data/archive/AAAA-MM.json
+  const ARCH = path.join(DATA, 'archive'); fs.mkdirSync(ARCH, { recursive: true });
+  const byMonth = {};
+  for (const a of articles) { const k = new Date(a.published).toISOString().slice(0, 7); (byMonth[k] = byMonth[k] || []).push(a); }
+  for (const [k, list] of Object.entries(byMonth)) {
+    const f = path.join(ARCH, k + '.json');
+    const map = new Map(readJSON(f, []).map(a => [a.id, a]));
+    list.forEach(a => map.set(a.id, a));
+    fs.writeFileSync(f, JSON.stringify([...map.values()].sort((a, b) => b.published - a.published)));
+  }
+  const months = fs.readdirSync(ARCH).filter(f => /^\d{4}-\d{2}\.json$/.test(f)).map(f => f.slice(0, 7)).sort();
   fs.writeFileSync(path.join(DATA, 'meta.json'), JSON.stringify({
-    updated: Date.now(),
+    updated: Date.now(), months,
     sources: sources.map(({ feeds, ...s }) => ({ ...s, status: state.sources[s.id] || null })),
   }));
   console.log(`[collecte] ${fresh.length} nouveaux, ${articles.length} au total, ${Object.values(state.sources).filter(s => s.ok).length}/${sources.length} sources OK`);

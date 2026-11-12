@@ -7,7 +7,7 @@ const store = { get(k, d) { try { return JSON.parse(localStorage.getItem('cv_' +
 
 const S = {
   meta: null, articles: [], pending: [], freshIds: new Set(), chatHistory: [], lastRefs: [],
-  days: store.get('days', 7), view: store.get('view', 'priority'), region: store.get('region', 'all'),
+  pmode: store.get('pmode', 'week'), anchor: new Date(), loadedMonths: new Set(), view: store.get('view2', 'france'), region: store.get('region', 'all'),
   levels: new Set(store.get('levels', LVLS)), hidden: new Set(store.get('hidden', [])), q: '',
   ai: null,
 };
@@ -45,24 +45,72 @@ async function api(url, opts = {}) {
   return j;
 }
 
+/* ---------- Période (semaine / mois / année) ---------- */
+function range() {
+  const d = new Date(S.anchor); d.setHours(0, 0, 0, 0);
+  let start, end;
+  if (S.pmode === 'week') { start = new Date(d); start.setDate(d.getDate() - ((d.getDay() + 6) % 7)); end = new Date(start); end.setDate(start.getDate() + 7); }
+  else if (S.pmode === 'month') { start = new Date(d.getFullYear(), d.getMonth(), 1); end = new Date(d.getFullYear(), d.getMonth() + 1, 1); }
+  else { start = new Date(d.getFullYear(), 0, 1); end = new Date(d.getFullYear() + 1, 0, 1); }
+  return [start.getTime(), end.getTime()];
+}
+function periodLabel() {
+  const [s, e] = range(), st = new Date(s), en = new Date(e - 1);
+  if (S.pmode === 'week') {
+    const f = (x, o) => x.toLocaleDateString('fr-FR', o);
+    const cur = Date.now() >= s && Date.now() < e;
+    return (cur ? 'Cette semaine · ' : '') + `${f(st, { day: 'numeric', month: st.getMonth() === en.getMonth() ? undefined : 'short' })} – ${f(en, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  }
+  if (S.pmode === 'month') { const t = st.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }); return t[0].toUpperCase() + t.slice(1); }
+  return String(st.getFullYear());
+}
+function shift(dir) {
+  const d = new Date(S.anchor);
+  if (S.pmode === 'week') d.setDate(d.getDate() + 7 * dir);
+  else if (S.pmode === 'month') d.setMonth(d.getMonth() + dir, 1);
+  else d.setFullYear(d.getFullYear() + dir, 0, 1);
+  S.anchor = d; changePeriod();
+}
+async function changePeriod() {
+  $$('#pmode button').forEach(b => b.classList.toggle('on', b.dataset.m === S.pmode));
+  $('#pLabel').textContent = periodLabel();
+  $('#pNext').disabled = range()[1] > Date.now();
+  await ensureMonths(); render();
+}
+// Charge les archives mensuelles nécessaires (au-delà des 45 derniers jours)
+async function ensureMonths() {
+  const [s, e] = range(), need = [];
+  for (let d = new Date(s); d.getTime() < e; d.setMonth(d.getMonth() + 1, 1)) {
+    const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    if ((S.meta.months || []).includes(k) && !S.loadedMonths.has(k)) need.push(k);
+  }
+  if (!need.length) return;
+  $('#countLbl').textContent = 'Chargement des archives…';
+  const lists = await Promise.all(need.map(k => api('data/archive/' + k + '.json').catch(() => [])));
+  const ids = new Set(S.articles.map(a => a.id));
+  lists.flat().forEach(a => { if (!ids.has(a.id)) { S.articles.push(a); ids.add(a.id); } });
+  need.forEach(k => S.loadedMonths.add(k));
+}
+
 /* ---------- Filtering & rendering ---------- */
 function filtered() {
-  const since = Date.now() - S.days * 864e5, q = S.q.toLowerCase().trim();
-  return S.articles.filter(a => a.published >= since && S.levels.has(a.level) && !S.hidden.has(a.sourceId)
-    && (S.region === 'all' || src(a.sourceId).region === S.region)
-    && (!q || (a.title + ' ' + a.summary + ' ' + (a.cves || []).join(' ') + ' ' + src(a.sourceId).name + ' ' + (a.tags || []).join(' ')).toLowerCase().includes(q)));
+  const [since, until] = range(), q = S.q.toLowerCase().trim();
+  return S.articles.filter(a => a.published >= since && a.published < until && S.levels.has(a.level) && !S.hidden.has(a.sourceId)
+    && (S.region === 'all' || (S.region === 'fr') === !!a.france)
+    && (!q || (a.title + ' ' + a.summary + ' ' + (a.titleOrig || '') + ' ' + (a.summaryOrig || '') + ' ' + (a.cves || []).join(' ') + ' ' + src(a.sourceId).name + ' ' + (a.tags || []).join(' ')).toLowerCase().includes(q)));
 }
 function card(a, i) {
   const s = src(a.sourceId);
   return `<article class="art ${S.freshIds.has(a.id) ? 'fresh' : ''}" style="--c:var(--${a.level});--s:${a.score};animation-delay:${Math.min(i, 12) * 25}ms" data-id="${a.id}">
     <div class="gauge"><b>${a.score}</b></div>
     <div>
-      <div class="art-meta"><span class="lvl">${LBL[a.level]}</span><b style="color:#cfd5e6">${esc(s.name)}</b><span>${s.region === 'fr' ? '🇫🇷' : '🌍'}</span><span title="${new Date(a.published).toLocaleString('fr-FR')}">· ${ago(a.published)}</span>${a.cvss ? `<span>· CVSS ${a.cvss}</span>` : ''}</div>
+      <div class="art-meta"><span class="lvl">${LBL[a.level]}</span><b style="color:#cfd5e6">${esc(s.name)}</b>${a.france ? '<span class="fr-badge">🇫🇷 France</span>' : ''}${a.lang === 'en' ? '<span class="tr" title="Traduit automatiquement de l\'anglais">🌐 traduit</span>' : ''}<span title="${new Date(a.published).toLocaleString('fr-FR')}">· ${ago(a.published)}</span>${a.cvss ? `<span>· CVSS ${a.cvss}</span>` : ''}</div>
       <h3><a href="${esc(a.link)}" target="_blank" rel="noopener">${esc(a.title)}</a></h3>
       ${a.summary ? `<p>${esc(a.summary)}</p>` : ''}
+      ${a.titleOrig ? `<div class="orig" hidden><b>Original :</b> ${esc(a.titleOrig)}<br>${esc(a.summaryOrig || '')}</div>` : ''}
       ${a.aiNote ? `<div class="ai-note">✦ ${esc(a.aiNote)}</div>` : ''}
       ${(a.tags?.length || a.cves?.length) ? `<div class="tags">${(a.cves || []).slice(0, 4).map(c => `<span class="tag cve" data-q="${c}">${c}</span>`).join('')}${(a.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
-      <div class="art-actions"><button data-act="more">Développer</button>${S.meta.ai ? '<button data-act="ask">✦ Demander à l\'IA</button>' : ''}<button data-act="copy">⧉ Copier le lien</button></div>
+      <div class="art-actions"><button data-act="more">Développer</button>${S.meta.ai ? '<button data-act="ask">✦ Demander à l\'IA</button>' : ''}${a.titleOrig ? '<button data-act="orig">🌐 Voir l\'original</button>' : ''}<button data-act="copy">⧉ Copier le lien</button></div>
     </div></article>`;
 }
 function render() {
@@ -70,9 +118,14 @@ function render() {
   $('#countLbl').textContent = `${list.length} actualité${list.length > 1 ? 's' : ''}`;
   $('#empty').hidden = list.length > 0;
   let html = '';
-  if (S.view === 'priority') {
-    // Les plus graves en tête ; à gravité égale, les plus récentes. Bonus fraîcheur 48 h.
-    const rank = a => ORDER[a.level] * 100 + a.score + Math.max(0, 48 - (Date.now() - a.published) / 36e5) / 2;
+  const rank = a => ORDER[a.level] * 100 + a.score + Math.max(0, 48 - (Date.now() - a.published) / 36e5) / 2;
+  if (S.view === 'france') {
+    // Bloc France (classé par importance) puis le reste du monde (classé par importance)
+    const fr = list.filter(a => a.france).sort((a, b) => rank(b) - rank(a)).slice(0, 200);
+    const world = list.filter(a => !a.france).sort((a, b) => rank(b) - rank(a)).slice(0, 200);
+    if (fr.length) html += `<div class="day-head">🇫🇷 Concerne la France<span class="pill">${fr.length} actus</span><span class="bar"></span></div>` + fr.map(card).join('');
+    if (world.length) html += `<div class="day-head">🌍 Reste du monde<span class="pill">${world.length} actus</span><span class="bar"></span></div>` + world.map(card).join('');
+  } else if (S.view === 'priority') {
     html = list.sort((a, b) => rank(b) - rank(a)).slice(0, 300).map(card).join('');
   } else if (S.view === 'days') {
     const groups = new Map();
@@ -80,7 +133,7 @@ function render() {
       const k = new Date(a.published).toDateString(); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(a);
     });
     for (const [, arts] of groups) {
-      arts.sort((a, b) => ORDER[b.level] - ORDER[a.level] || b.score - a.score);
+      arts.sort((a, b) => (b.france - a.france) || ORDER[b.level] - ORDER[a.level] || b.score - a.score);
       const crit = arts.filter(a => a.level === 'critique').length;
       html += `<div class="day-head">${dayLabel(arts[0].published)}<span class="pill">${arts.length} actus${crit ? ` · ${crit} critique${crit > 1 ? 's' : ''}` : ''}</span><span class="bar"></span></div>` + arts.map(card).join('');
     }
@@ -91,17 +144,17 @@ function render() {
   renderStats(); renderSidebarCounts();
 }
 function renderStats() {
-  const since = Date.now() - S.days * 864e5;
-  const base = S.articles.filter(a => a.published >= since && !S.hidden.has(a.sourceId) && (S.region === 'all' || src(a.sourceId).region === S.region));
+  const [since, until] = range();
+  const base = S.articles.filter(a => a.published >= since && a.published < until && !S.hidden.has(a.sourceId) && (S.region === 'all' || (S.region === 'fr') === !!a.france));
   const c = l => base.filter(a => a.level === l).length;
   const today = base.filter(a => Date.now() - a.published < 864e5).length;
   $('#stats').innerHTML = [
     ['critique', c('critique'), 'Critiques'], ['eleve', c('eleve'), 'Élevées'], ['moyen', c('moyen'), 'Moyennes'],
-    ['acc', today, 'Dernières 24 h'], ['faible', S.meta.sources.filter(s => s.status?.ok).length + '/' + S.meta.sources.length, 'Sources actives'],
+    ['acc', base.filter(a => a.france && ORDER[a.level] >= 3).length, '🇫🇷 Graves en France'], ['faible', S.meta.sources.filter(s => s.status?.ok).length + '/' + S.meta.sources.length, 'Sources actives'],
   ].map(([k, v, l]) => `<div class="stat" data-lvl="${k}" style="--c:var(--${k})"><b>${v}</b><span>${l}</span></div>`).join('');
 }
 function renderSidebarCounts() {
-  const since = Date.now() - S.days * 864e5, recent = S.articles.filter(a => a.published >= since);
+  const [since, until] = range(), recent = S.articles.filter(a => a.published >= since && a.published < until);
   $('#levelFilters').innerHTML = LVLS.map(l => `<button class="lvl-chip ${S.levels.has(l) ? '' : 'off'}" data-l="${l}"><span class="sw" style="background:var(--${l})"></span>${LBL[l]}<span class="n">${recent.filter(a => a.level === l).length}</span></button>`).join('');
   const row = s => `<label class="src" title="${s.status?.ok ? 'OK — vérifié ' + ago(s.status.lastCheck) : esc(s.status?.lastError || 'En attente')}"><input type="checkbox" data-s="${s.id}" ${S.hidden.has(s.id) ? '' : 'checked'}><span class="st ${s.status ? (s.status.ok ? 'ok' : 'ko') : ''}"></span>${esc(s.name)}<span class="c">${recent.filter(a => a.sourceId === s.id).length}</span></label>`;
   const g = (t, f) => `<div class="src-group">${t}</div>` + S.meta.sources.filter(f).map(row).join('');
@@ -123,7 +176,7 @@ async function load() {
   try { ({ meta: S.meta, articles: S.articles } = await fetchData()); }
   catch { S.meta = { updated: Date.now(), sources: [], ai: true }; S.articles = []; $('#feed').innerHTML = ''; toast("Pas encore de données : la première collecte GitHub n'a pas encore tourné."); }
   S.ai = LocalAI.create(() => S.articles, S.meta.sources);
-  render(); setLive();
+  await changePeriod(); setLive();
   setInterval(poll, 3 * 60000); setInterval(setLive, 60000);
 }
 async function poll(manual) {
@@ -196,9 +249,11 @@ function bind() {
   });
   let qt; $('#q').oninput = e => { clearTimeout(qt); qt = setTimeout(() => { S.q = e.target.value; render(); }, 150); };
 
-  $$('#period button').forEach(b => { b.classList.toggle('on', +b.dataset.d === S.days); b.onclick = () => { S.days = +b.dataset.d; store.set('days', S.days); $$('#period button').forEach(x => x.classList.toggle('on', x === b)); render(); }; });
+  $$('#pmode button').forEach(b => b.onclick = () => { S.pmode = b.dataset.m; store.set('pmode', S.pmode); changePeriod(); });
+  $('#pPrev').onclick = () => shift(-1); $('#pNext').onclick = () => shift(1);
+  $('#pToday').onclick = () => { S.anchor = new Date(); changePeriod(); };
   $$('#region button').forEach(b => { b.classList.toggle('on', b.dataset.r === S.region); b.onclick = () => { S.region = b.dataset.r; store.set('region', S.region); $$('#region button').forEach(x => x.classList.toggle('on', x === b)); render(); }; });
-  $$('#viewTabs button').forEach(b => { b.classList.toggle('on', b.dataset.v === S.view); b.onclick = () => { S.view = b.dataset.v; store.set('view', S.view); $$('#viewTabs button').forEach(x => x.classList.toggle('on', x === b)); render(); }; });
+  $$('#viewTabs button').forEach(b => { b.classList.toggle('on', b.dataset.v === S.view); b.onclick = () => { S.view = b.dataset.v; store.set('view2', S.view); $$('#viewTabs button').forEach(x => x.classList.toggle('on', x === b)); render(); }; });
 
   $('#levelFilters').onclick = e => { const b = e.target.closest('[data-l]'); if (!b) return; const l = b.dataset.l; S.levels.has(l) ? S.levels.delete(l) : S.levels.add(l); store.set('levels', [...S.levels]); render(); };
   $('#stats').onclick = e => { const s = e.target.closest('[data-lvl]'); if (!s || !LVLS.includes(s.dataset.lvl)) return; S.levels = new Set([s.dataset.lvl]); store.set('levels', [...S.levels]); render(); toast('Filtre : ' + LBL[s.dataset.lvl] + ' uniquement'); };
@@ -213,6 +268,7 @@ function bind() {
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (act === 'more') { art.classList.toggle('open'); e.target.textContent = art.classList.contains('open') ? 'Réduire' : 'Développer'; }
     if (act === 'ask') ask(`Explique-moi cette actualité, son impact et les actions recommandées : « ${a.title} » (${src(a.sourceId).name})`);
+    if (act === 'orig') { const o = art.querySelector('.orig'); o.hidden = !o.hidden; e.target.textContent = o.hidden ? "🌐 Voir l'original" : '🌐 Masquer l\'original'; }
     if (act === 'copy') navigator.clipboard.writeText(a.link).then(() => toast('Lien copié'));
   };
   $('#newBanner').onclick = flushPending;

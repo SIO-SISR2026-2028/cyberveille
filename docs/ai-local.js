@@ -67,8 +67,11 @@
       } else if (/\bcve\b|corriger|patch|vulnerab|faille|mettre a jour|mise a jour/.test(n)) {
         list = pool.filter(a => a.cves?.length || a.tags?.includes('Vulnérabilité')).sort((a, b) => b.score - a.score);
         intro = `Vulnérabilités à traiter en priorité sur ${label} :`;
+      } else if (/\bfrance\b|francais|hexagone/.test(n) && !/critique|grave|cve|faille/.test(n)) {
+        list = pool.filter(a => a.france).sort((a, b) => ORDER[b.level] - ORDER[a.level] || b.score - a.score);
+        intro = `Actualités qui concernent la France sur ${label} (par importance) :`;
       } else if (/critique|grave|urgent|important|prior|danger|menace/.test(n)) {
-        list = pool.filter(a => ORDER[a.level] >= 3).sort((a, b) => b.score - a.score);
+        list = pool.filter(a => ORDER[a.level] >= 3 && (!/france|francais/.test(n) || a.france)).sort((a, b) => (b.france - a.france) || b.score - a.score);
         intro = `Menaces de niveau Élevé ou Critique sur ${label}${src ? ' (' + src.name + ')' : ''} :`;
       } else if (/resum|synthese|bilan|point|quoi de neuf/.test(n) && !words(question).filter(w => !(src && (ALIASES[src.id] || []).some(a => a.includes(w)))).length) {
         const arts = pool.sort((a, b) => b.score - a.score);

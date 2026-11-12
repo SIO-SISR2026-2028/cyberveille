@@ -27,12 +27,6 @@
   <aside class="sidebar" id="sidebar">
     <div class="side-head only-mobile"><b>Filtres</b><button class="icon-btn" id="btnCloseSide">✕</button></div>
 
-    <section class="panel">
-      <h4>Période</h4>
-      <div class="seg" id="period">
-        <button data-d="1">24 h</button><button data-d="3">3 j</button><button data-d="7" class="on">7 j</button><button data-d="30">30 j</button>
-      </div>
-    </section>
 
     <section class="panel">
       <h4>Gravité</h4>
@@ -40,8 +34,8 @@
     </section>
 
     <section class="panel">
-      <h4>Zone</h4>
-      <div class="seg" id="region"><button data-r="all" class="on">Toutes</button><button data-r="fr">🇫🇷 France</button><button data-r="int">🌍 Monde</button></div>
+      <h4>Impact géographique</h4>
+      <div class="seg" id="region"><button data-r="all" class="on">Toutes</button><button data-r="fr" title="Concerne la France">🇫🇷 France</button><button data-r="int" title="Hors France">🌍 Monde</button></div>
     </section>
 
     <section class="panel">
@@ -51,6 +45,15 @@
   </aside>
 
   <main class="main">
+    <section class="periodbar">
+      <div class="seg" id="pmode"><button data-m="week" class="on">Semaine</button><button data-m="month">Mois</button><button data-m="year">Année</button></div>
+      <div class="pnav">
+        <button class="icon-btn" id="pPrev" aria-label="Période précédente">‹</button>
+        <b id="pLabel">—</b>
+        <button class="icon-btn" id="pNext" aria-label="Période suivante">›</button>
+      </div>
+      <button class="btn small ghost" id="pToday">Aujourd'hui</button>
+    </section>
     <section class="stats" id="stats"></section>
 
     <section class="ai-brief" id="brief">
@@ -67,9 +70,10 @@
 
     <div class="toolbar">
       <div class="tabs" id="viewTabs">
-        <button data-v="priority" class="on">🔥 Priorité</button>
+        <button data-v="france" class="on">🇫🇷 France d'abord</button>
+        <button data-v="priority">🔥 Importance</button>
         <button data-v="days">📅 Par jour</button>
-        <button data-v="timeline">⏱ Chronologique</button>
+        <button data-v="timeline">⏱ Récent</button>
       </div>
       <div class="muted" id="countLbl"></div>
     </div>
