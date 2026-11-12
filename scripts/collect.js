@@ -75,14 +75,14 @@ async function translate(text) {
   }
   const parts = text.match(/[^.!?]+[.!?]*\s*/g) || [text];
   const out = [];
-  for (const p of parts.slice(0, 6)) {
+  for (const p of parts.slice(0, 2)) {
     const r = await translator(p.trim(), { max_new_tokens: 200 });
     out.push(r[0].translation_text);
   }
   return out.join(' ');
 }
 const TRAD = { error: null, done: 0 };
-async function translateBatch(list, max = 120) {
+async function translateBatch(list, max = 25) {
   let n = 0;
   for (const a of list) {
     if (n >= max) break;
