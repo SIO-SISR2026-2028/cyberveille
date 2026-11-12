@@ -246,3 +246,13 @@ input[type=password]{background:var(--bg2);border:1px solid var(--line);color:va
   .sidebar{transform:none;transition:none;display:none}
   .sidebar.on{display:flex;animation:cv-in-left .25s ease-out}
 }
+
+/* Barres de défilement discrètes */
+*{scrollbar-width:thin;scrollbar-color:#2a3350 transparent}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2a3350;border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#3a4568;background-clip:padding-box}
+::-webkit-scrollbar-button{display:none;height:0;width:0}
+::-webkit-scrollbar-corner{background:transparent}
+.sidebar{padding-right:4px}
