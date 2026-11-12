@@ -1,0 +1,143 @@
+{
+ "sources": {
+  "certfr": {
+   "ok": true,
+   "lastCheck": 1794474369848,
+   "lastError": null,
+   "feedUrl": "https://cert.cyber.gouv.fr/feed/"
+  },
+  "cnil": {
+   "ok": true,
+   "lastCheck": 1794474370146,
+   "lastError": null,
+   "feedUrl": "https://www.cnil.fr/fr/rss.xml"
+  },
+  "numerama": {
+   "ok": true,
+   "lastCheck": 1794474370487,
+   "lastError": null,
+   "feedUrl": "https://www.numerama.com/cyberguerre/feed/"
+  },
+  "zataz": {
+   "ok": true,
+   "lastCheck": 1794474370565,
+   "lastError": null,
+   "feedUrl": "https://www.zataz.com/feed/"
+  },
+  "cybermalveillance": {
+   "ok": true,
+   "lastCheck": 1794474370635,
+   "lastError": null,
+   "feedUrl": "https://www.cybermalveillance.gouv.fr/feed/atom-flux-actualites"
+  },
+  "cyberattaque": {
+   "ok": true,
+   "lastCheck": 1794474370882,
+   "lastError": null,
+   "feedUrl": "https://www.cyberattaque.org/feed/"
+  },
+  "lemagit": {
+   "ok": true,
+   "lastCheck": 1794474370950,
+   "lastError": null,
+   "feedUrl": "https://www.lemagit.fr/rss/ContentSyndication.xml"
+  },
+  "bleeping": {
+   "ok": true,
+   "lastCheck": 1794474371375,
+   "lastError": null,
+   "feedUrl": "https://www.bleepingcomputer.com/feed/"
+  },
+  "zdnetfr": {
+   "ok": true,
+   "lastCheck": 1794474371420,
+   "lastError": null,
+   "feedUrl": "https://www.zdnet.fr/feeds/rss/actualites/"
+  },
+  "undernews": {
+   "ok": true,
+   "lastCheck": 1794474371450,
+   "lastError": null,
+   "feedUrl": "https://www.undernews.fr/feed"
+  },
+  "thn": {
+   "ok": true,
+   "lastCheck": 1794474371471,
+   "lastError": null,
+   "feedUrl": "https://feeds.feedburner.com/TheHackersNews"
+  },
+  "securityweek": {
+   "ok": true,
+   "lastCheck": 1794474371482,
+   "lastError": null,
+   "feedUrl": "https://www.securityweek.com/feed/"
+  },
+  "usinedigitale": {
+   "ok": false,
+   "lastCheck": 1794474371642,
+   "lastError": "Status code 403"
+  },
+  "gsm": {
+   "ok": true,
+   "lastCheck": 1794474371690,
+   "lastError": null,
+   "feedUrl": "https://www.globalsecuritymag.fr/spip.php?page=backend"
+  },
+  "therecord": {
+   "ok": true,
+   "lastCheck": 1794474371711,
+   "lastError": null,
+   "feedUrl": "https://therecord.media/feed"
+  },
+  "darkreading": {
+   "ok": true,
+   "lastCheck": 1794474371863,
+   "lastError": null,
+   "feedUrl": "https://www.darkreading.com/rss.xml"
+  },
+  "lmi": {
+   "ok": true,
+   "lastCheck": 1794474371890,
+   "lastError": null,
+   "feedUrl": "https://www.lemondeinformatique.fr/flux-rss/thematique/securite/rss.xml"
+  },
+  "cybergend": {
+   "ok": false,
+   "lastCheck": 1794474372014,
+   "lastError": "Status code 403"
+  },
+  "nextink": {
+   "ok": true,
+   "lastCheck": 1794474372128,
+   "lastError": null,
+   "feedUrl": "https://next.ink/feed/"
+  },
+  "silicon": {
+   "ok": true,
+   "lastCheck": 1794474372134,
+   "lastError": null,
+   "feedUrl": "https://www.silicon.fr/feed"
+  },
+  "anssi": {
+   "ok": false,
+   "lastCheck": 1794474372184,
+   "lastError": "Status code 404"
+  },
+  "itconnect": {
+   "ok": true,
+   "lastCheck": 1794474372415,
+   "lastError": null,
+   "feedUrl": "https://www.it-connect.fr/feed/"
+  },
+  "riskintel": {
+   "ok": false,
+   "lastCheck": 1794474372535,
+   "lastError": "Status code 404"
+  },
+  "solnum": {
+   "ok": false,
+   "lastCheck": 1794474373486,
+   "lastError": "Feed not recognized as RSS 1 or 2."
+  }
+ }
+}
