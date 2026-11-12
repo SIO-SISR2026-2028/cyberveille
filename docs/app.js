@@ -206,19 +206,90 @@ function closeAll() { $$('.drawer,.modal,.sidebar').forEach(e => e.classList.rem
 
 /* ---------- AI ---------- */
 function addMsg(cls, html) { const d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html; $('#chat').append(d); $('#chat').scrollTop = 1e9; return d; }
-function ask(q) {
+/* ---------- Chat IA en direct : Pollinations.ai (startup open source, Berlin) ----------
+   Modèle GPT-OSS 20B hébergé chez OVH (France). Sans compte, sans clé, mode "private" (non stocké).
+   Seuls la question et les articles publics servant de contexte sont envoyés. */
+const SYS = `Tu es l'analyste de veille cybersécurité du site CyberVeille. Tu réponds UNIQUEMENT à partir des articles d'actualité publics fournis. N'invente aucun fait, date, CVE ou chiffre ; si l'information n'y est pas, dis-le. Cite les articles avec leur numéro entre crochets, ex. [2]. Réponds en français, clairement et brièvement, avec des listes à puces si utile, et des recommandations concrètes quand c'est pertinent.`;
+function contextFor(q) {
+  const base = S.ai.ask(q, S.lastRefs);
+  let refs = base.refsRaw || [];
+  if (!refs.length) {
+    const [s, e] = range();
+    refs = S.articles.filter(a => a.published >= s && a.published < e && !S.hidden.has(a.sourceId))
+      .sort((a, b) => ORDER[b.level] - ORDER[a.level] || b.score - a.score).slice(0, 12);
+  }
+  return { base, refs: refs.slice(0, 12) };
+}
+const ctxText = refs => refs.map((a, i) => `[${i + 1}] ${LBL[a.level]} ${a.score}/100 | ${src(a.sourceId).name} | ${new Date(a.published).toLocaleDateString('fr-FR')}${a.france ? ' | concerne la France' : ''}${a.cves && a.cves.length ? ' | ' + a.cves.join(', ') : ''}\nTitre : ${a.title}\nRésumé : ${(a.summary || '').slice(0, 450)}${a.aiNote ? '\nAnalyse : ' + a.aiNote : ''}`).join('\n\n');
+const refLinks = refs => refs.map(a => ({ link: a.link, title: a.title, source: src(a.sourceId).name }));
+
+async function remoteChat(messages, onText) {
+  const key = store.get('pollKey', null);
+  const url = key ? 'https://gen.pollinations.ai/v1/chat/completions' : 'https://text.pollinations.ai/openai';
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: Object.assign({ 'Content-Type': 'application/json' }, key ? { Authorization: 'Bearer ' + key } : {}),
+    body: JSON.stringify({ model: 'openai', messages, stream: true, private: true, temperature: 0.2 }),
+  });
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
+    const msg = (j.error && j.error.message) || ('Erreur ' + r.status);
+    const wait = (msg.match(/after (\d+)s/) || [])[1];
+    throw new Error(wait ? `Limite gratuite : 1 réponse toutes les 45 s. Réessayez dans ${wait} s.` : msg);
+  }
+  const reader = r.body.getReader(), dec = new TextDecoder();
+  let buf = '', out = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split('\n'); buf = lines.pop();
+    for (const l of lines) {
+      if (!l.startsWith('data:')) continue;
+      const d = l.slice(5).trim();
+      if (d === '[DONE]') continue;
+      try { const c = JSON.parse(d).choices?.[0]?.delta?.content; if (c) { out += c; onText(out); } } catch {}
+    }
+  }
+  return out;
+}
+
+async function answer(q, el, history) {
+  const { base, refs } = contextFor(q);
+  S.lastRefs = refs;
+  const links = refLinks(refs);
+  el.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
+  try {
+    const out = await remoteChat([
+      { role: 'system', content: SYS + '\n\nARTICLES :\n' + ctxText(refs) },
+      ...history.slice(-4),
+      { role: 'user', content: q },
+    ], t => { el.innerHTML = md(t, links); });
+    el.innerHTML = md(out, links) + `<div class="muted small" style="margin-top:6px">${ic('spark')} ${refs.length} articles de vos sources · Pollinations (OVH, France)</div>`;
+    return out;
+  } catch (e) {
+    // Réponse de secours instantanée à partir des sources
+    el.innerHTML = `<div class="muted small" style="margin-bottom:6px">${ic('alert')} ${esc(e.message)}</div>` + md(base.answer, base.refs);
+    if (base.refsRaw) S.lastRefs = base.refsRaw;
+    return base.answer;
+  }
+}
+const chatHist = [], inlineHist = []; // en mémoire uniquement, effacés en quittant la page
+async function ask(q) {
   if (!q.trim()) return;
   open('aiDrawer'); addMsg('user', esc(q));
-  const t = addMsg('bot', '<span class="typing"><span></span><span></span><span></span></span>');
-  setTimeout(() => { const r = S.ai.ask(q, S.lastRefs); if (r.refsRaw) S.lastRefs = r.refsRaw; t.innerHTML = md(r.answer, r.refs); }, 250);
+  const t = addMsg('bot', '');
+  const out = await answer(q, t, chatHist);
+  chatHist.push({ role: 'user', content: q }, { role: 'assistant', content: out });
+  $('#chat').scrollTop = 1e9;
 }
-function askInline(q) {
+async function askInline(q) {
   if (!q.trim()) return;
-  const r = S.ai.ask(q, S.lastRefs);
-  if (r.refsRaw) S.lastRefs = r.refsRaw;
   const d = document.createElement('div'); d.className = 'qa';
-  d.innerHTML = `<div class="q">${ic('chevR')} ${esc(q)}</div>${md(r.answer, r.refs)}`;
+  d.innerHTML = `<div class="q">${ic('chevR')} ${esc(q)}</div><div class="a"></div>`;
   $('#askOut').prepend(d);
+  const out = await answer(q, d.querySelector('.a'), inlineHist);
+  inlineHist.push({ role: 'user', content: q }, { role: 'assistant', content: out });
 }
 // Brief rédigé par l'IA sur les serveurs GitHub (data/brief.json)
 async function loadBrief() {
@@ -345,7 +416,7 @@ function bind() {
     const cve = e.target.closest('.cve'); if (cve) { $('#q').value = S.q = cve.dataset.q; render(); return; }
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (act === 'more') { art.classList.toggle('open'); e.target.closest('button').innerHTML = art.classList.contains('open') ? ic('up') + ' Réduire' : ic('down') + ' Développer'; }
-    if (act === 'ask') { S.lastRefs = [a]; ask('détails sur 1'); }
+    if (act === 'ask') { S.lastRefs = [a]; ask(`Explique-moi en détail l'article [1] « ${a.title} » : de quoi s'agit-il, qui est concerné, quel est le risque et que faut-il faire ?`); }
     if (act === 'orig') { const o = art.querySelector('.orig'); o.hidden = !o.hidden; e.target.closest('button').innerHTML = ic('lang') + (o.hidden ? ' Original' : ' Masquer l\'original'); }
     if (act === 'copy') navigator.clipboard.writeText(a.link).then(() => toast('Lien copié'));
   };
@@ -365,6 +436,10 @@ function bind() {
   $('#chatQ').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#chatForm').requestSubmit(); } };
   $('#chatQ').oninput = e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; };
   $('#briefHours').onchange = showBrief;
+  $('#pollKeyBtn').onclick = e => { e.preventDefault();
+    const k = prompt('Clé Pollinations facultative (gratuite sur enter.pollinations.ai) pour supprimer la limite de 45 s.\nElle reste uniquement dans ce navigateur. Laissez vide pour la retirer.', store.get('pollKey', '') || '');
+    if (k === null) return; store.set('pollKey', k.trim() || null); toast(k.trim() ? 'Clé enregistrée dans ce navigateur' : 'Clé retirée');
+  };
   $('#askForm').onsubmit = e => { e.preventDefault(); askInline($('#askQ').value); $('#askQ').value = ''; };
 
   $('#btnAlerts').onclick = openMail;
