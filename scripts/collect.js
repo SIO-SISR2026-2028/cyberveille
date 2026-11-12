@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const Parser = require('rss-parser');
 const nodemailer = require('nodemailer');
 const sources = require('./sources');
-const { scoreArticle } = require('./scoring');
+const { scoreArticle, isThreat } = require('./scoring');
 const LocalAI = require('../docs/ai-local');
 
 const ROOT = path.join(__dirname, '..');
@@ -49,7 +49,7 @@ async function fetchSource(src, state, known) {
     const pub = Date.parse(item.isoDate || item.pubDate) || Date.now();
     const art = { id, sourceId: src.id, title: stripHtml(item.title), link, summary: stripHtml(item.contentSnippet || item.summary || item.content || '').slice(0, 600), published: Math.min(pub, Date.now()), fetched: Date.now() };
     Object.assign(art, scoreArticle(art, src));
-    fresh.push(art);
+    if (isThreat(art)) fresh.push(art);
   }
   state.sources[src.id] = { ok: true, lastCheck: Date.now(), lastError: null, feedUrl: used };
   return fresh;
@@ -121,7 +121,8 @@ function filterFor(cfg, list) {
   return list.filter(a => {
     if (ORDER[a.level] < ORDER[cfg.gravite_minimale || 'info']) return false;
     const s = sources.find(x => x.id === a.sourceId) || {};
-    if (cfg.zone && cfg.zone !== 'toutes' && s.region !== cfg.zone) return false;
+    if (cfg.zone === 'france' && !a.france) return false;
+    if (['fr', 'int'].includes(cfg.zone) && s.region !== cfg.zone) return false;
     if (cfg.sources?.length && !cfg.sources.includes(a.sourceId)) return false;
     if (cfg.mots_cles?.length) { const t = (a.title + ' ' + a.summary).toLowerCase(); if (!cfg.mots_cles.some(k => t.includes(String(k).toLowerCase()))) return false; }
     return true;
@@ -130,6 +131,7 @@ function filterFor(cfg, list) {
 
 async function maybeMail(articles, state) {
   const cfg = readJSON(path.join(ROOT, 'config.json'), {}).email || {};
+  if (cfg.gravite_minimale === 'info') cfg.gravite_minimale = 'faible';
   const { SMTP_USER, SMTP_PASS, MAIL_TO } = process.env;
   if (!cfg.actif || !SMTP_USER || !SMTP_PASS || !MAIL_TO) { console.log('[mail] désactivé ou secrets manquants'); return; }
   if (!isDue(cfg, state)) return;
@@ -145,8 +147,8 @@ async function maybeMail(articles, state) {
   const site = process.env.SITE_URL || '';
   const html = `<!doctype html><html><body style="margin:0;background:#0b0e17;font-family:Segoe UI,Arial,sans-serif;color:#d6dbea">
    <div style="max-width:680px;margin:0 auto;padding:24px">
-    <div style="font-size:22px;font-weight:700;color:#fff">🛡️ CyberVeille</div><div style="color:#8a93ad;margin-bottom:16px">${titles[cfg.frequence] || 'Digest'} — ${list.length} actus</div>
-    ${resume ? `<div style="background:#161d30;border:1px solid #2a3350;border-radius:10px;padding:14px 16px;font-size:14px;line-height:1.55"><div style="font-weight:700;color:#fff;margin-bottom:6px">✦ Synthèse</div>${md(resume)}</div>` : ''}
+    <div style="font-size:22px;font-weight:700;color:#fff">CyberVeille</div><div style="color:#8a93ad;margin-bottom:16px">${titles[cfg.frequence] || 'Digest'} — ${list.length} actus</div>
+    ${resume ? `<div style="background:#161d30;border:1px solid #2a3350;border-radius:10px;padding:14px 16px;font-size:14px;line-height:1.55"><div style="font-weight:700;color:#fff;margin-bottom:6px">Synthèse</div>${md(resume)}</div>` : ''}
     ${list.map((a, i) => `<div style="background:#131a2a;border-left:4px solid ${COLOR[a.level]};border-radius:8px;padding:12px 14px;margin:10px 0">
       <div style="font-size:11px;color:#8a93ad"><b style="color:${COLOR[a.level]}">[${i + 1}] ${LABEL[a.level].toUpperCase()} · ${a.score}/100</b> — ${esc(srcName(a.sourceId))}</div>
       <a href="${esc(a.link)}" style="color:#fff;font-weight:600;text-decoration:none;font-size:15px">${esc(a.title)}</a>
@@ -155,7 +157,7 @@ async function maybeMail(articles, state) {
    </div></body></html>`;
 
   const top = list[0];
-  const subject = cfg.frequence === 'instantane' ? `[${LABEL[top.level]}] ${top.title}`.slice(0, 140) : `CyberVeille — ${titles[cfg.frequence]} : ${list.length} actus${list.some(a => a.level === 'critique') ? ' dont critiques ⚠️' : ''}`;
+  const subject = cfg.frequence === 'instantane' ? `[${LABEL[top.level]}] ${top.title}`.slice(0, 140) : `CyberVeille — ${titles[cfg.frequence]} : ${list.length} actus${list.some(a => a.level === 'critique') ? ' dont critiques' : ''}`;
   const tx = nodemailer.createTransport({ host: process.env.SMTP_HOST || 'smtp.gmail.com', port: Number(process.env.SMTP_PORT) || 465, secure: true, auth: { user: SMTP_USER, pass: SMTP_PASS } });
   await tx.sendMail({ from: `CyberVeille <${SMTP_USER}>`, to: MAIL_TO, subject, html });
   markSent();
@@ -169,7 +171,10 @@ async function maybeMail(articles, state) {
   const results = await Promise.allSettled(sources.map(s => Promise.race([fetchSource(s, state, known), new Promise((_, rej) => setTimeout(() => { state.sources[s.id] = { ...(state.sources[s.id] || {}), ok: false, lastCheck: Date.now(), lastError: 'Délai dépassé' }; rej(new Error('timeout')); }, 40000))])));
   const fresh = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
   const cutoff = Date.now() - RETENTION_DAYS * 864e5;
-  articles = [...fresh, ...articles].filter(a => a.published >= cutoff).sort((a, b) => b.published - a.published);
+  const srcIds = new Set(sources.map(s => s.id));
+  articles = [...fresh, ...articles].filter(a => srcIds.has(a.sourceId))
+    .map(a => { if (a.level === 'info') a.level = 'faible'; return a; })
+    .filter(a => isThreat(a) && a.published >= cutoff).sort((a, b) => b.published - a.published);
   const srcById = Object.fromEntries(sources.map(s => [s.id, s]));
   for (const a of articles) if (!a.lang && srcById[a.sourceId]?.region === 'fr') a.lang = 'fr';
   await translateBatch(articles.filter(a => !a.lang));
@@ -182,7 +187,7 @@ async function maybeMail(articles, state) {
   for (const a of articles) { const k = new Date(a.published).toISOString().slice(0, 7); (byMonth[k] = byMonth[k] || []).push(a); }
   for (const [k, list] of Object.entries(byMonth)) {
     const f = path.join(ARCH, k + '.json');
-    const map = new Map(readJSON(f, []).map(a => [a.id, a]));
+    const map = new Map(readJSON(f, []).filter(a => srcIds.has(a.sourceId) && isThreat(a)).map(a => { if (a.level === 'info') a.level = 'faible'; return [a.id, a]; }));
     list.forEach(a => map.set(a.id, a));
     fs.writeFileSync(f, JSON.stringify([...map.values()].sort((a, b) => b.published - a.published)));
   }

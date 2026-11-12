@@ -54,7 +54,38 @@
       return out;
     }
 
-    function ask(question) {
+    function details(a) {
+      const all = getArticles(), toks = new Set(norm(a.title).split(/[^a-z0-9-]+/).filter(w => w.length > 4 && !STOP.has(w)));
+      const related = all.filter(b => b.id !== a.id && ((a.cves || []).some(c => (b.cves || []).includes(c)) || norm(b.title).split(/[^a-z0-9-]+/).filter(w => toks.has(w)).length >= 3)).slice(0, 5);
+      let out = `### ${a.title}\n**${LBL[a.level]} · ${a.score}/100** — ${srcName(a.sourceId)}, ${fmtDate(a.published)}${a.france ? ' — concerne la France' : ''}`;
+      if (a.summary) out += `\n\n${a.summary}`;
+      if (a.titleOrig) out += `\n\n**Texte original :** ${a.titleOrig}${a.summaryOrig ? ' — ' + a.summaryOrig : ''}`;
+      if (a.tags && a.tags.length) out += `\n\n**Caractéristiques :** ${a.tags.join(', ')}`;
+      if (a.cves && a.cves.length) out += `\n**CVE :** ${a.cves.join(', ')}${a.cvss ? ' (CVSS ' + a.cvss + ')' : ''}`;
+      const t = a.tags || [], reco = [];
+      if (t.some(x => /Exploitée|0-day|KEV/.test(x))) reco.push('Faille exploitée : appliquer le correctif en urgence ou isoler les équipements concernés.');
+      else if ((a.cves && a.cves.length) || t.includes('Vulnérabilité')) reco.push('Vérifier si vous utilisez le produit et planifier la mise à jour.');
+      if (t.includes('Ransomware')) reco.push('Vérifier les sauvegardes hors ligne et surveiller les accès distants.');
+      if (t.includes('Fuite / compromission')) reco.push('Si vous êtes concerné : changer vos mots de passe et vous méfier des e-mails de phishing.');
+      if (t.includes('Phishing')) reco.push('Prévenir les utilisateurs et ne cliquer sur aucun lien suspect.');
+      if (reco.length) out += `\n\n**Que faire :**\n` + reco.map(r => '- ' + r).join('\n');
+      out += `\n\nArticle complet : [1]`;
+      if (related.length) out += `\n\n**Actus liées :**\n` + related.map((b, i) => line(b, i + 2)).join('\n');
+      return { answer: out, refs: [a].concat(related) };
+    }
+
+    function ask(question, lastRefs) {
+      lastRefs = lastRefs || [];
+      const pack = r => ({ answer: r.answer, refs: r.refs.map(a => ({ link: a.link, title: a.title, source: srcName(a.sourceId) })), refsRaw: r.refs });
+      const dm = norm(question).match(/(?:detail|plus d.?info|explique|precise|developpe|en savoir plus|parle)[^0-9]*\[?(\d{1,2})\]?|^\s*\[?(\d{1,2})\]?\s*\??\s*$/);
+      if (dm && lastRefs.length) {
+        const n = +(dm[1] || dm[2]), a = lastRefs[n - 1];
+        return a ? pack(details(a)) : { answer: `Pas d'article n°${n} dans ma dernière réponse.`, refs: [] };
+      }
+      return pack(askCore(question));
+    }
+
+    function askCore(question) {
       const all = getArticles(), n = norm(question), { ms, label } = period(question);
       let pool = all.filter(a => a.published >= Date.now() - ms), intro = '', list = [];
       const src = sources.find(s => (ALIASES[s.id] || [s.id]).some(al => new RegExp('(^|[^a-z0-9])' + al.replace(/[.-]/g, '\\$&') + '([^a-z0-9]|$)').test(n)));
@@ -90,8 +121,9 @@
       list = list.slice(0, 10);
       let answer = intro + (list.length ? '\n' + list.map((a, i) => line(a, i + 1)).join('\n') : '');
       const crit = list.filter(a => a.level === 'critique').length;
-      if (crit) answer += `\n\n⚠️ ${crit} actu(s) critique(s) : consultez les avis et appliquez les correctifs sans attendre.`;
-      return { answer, refs: list.map(a => ({ link: a.link, title: a.title, source: srcName(a.sourceId) })) };
+      if (crit) answer += `\n\n**Attention :** ${crit} menace(s) critique(s) : consultez les avis et appliquez les correctifs sans attendre.`;
+      if (list.length) answer += `\n\n*Tapez « détails sur 2 » pour approfondir une actu.*`;
+      return { answer, refs: list };
     }
 
     return { ask, summary };

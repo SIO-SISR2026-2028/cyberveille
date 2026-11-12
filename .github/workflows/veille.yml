@@ -2,11 +2,11 @@ name: Veille cyber
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # toutes les 15 min (GitHub peut retarder de quelques minutes)
+    - cron: "*/5 * * * *"    # toutes les 5 min (minimum autorisé par GitHub, qui peut retarder un peu)
   workflow_dispatch:         # bouton "Run workflow" pour lancer à la main
   push:
     branches: [main]
-    paths: ["docs/**", "config.json", "scripts/**"]
+    paths: ["docs/*.js", "docs/*.html", "docs/*.css", "config.json", "scripts/**", ".github/**"]
 
 permissions:
   contents: write

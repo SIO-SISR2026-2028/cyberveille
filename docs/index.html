@@ -5,27 +5,55 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0d16">
 <title>CyberVeille — Veille cybersécurité en temps réel</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7cff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/%3E%3C/svg%3E">
 <meta name="referrer" content="no-referrer">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="bg-grid"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <defs>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17v4M17 19h4"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 22a6 6 0 0 0 6-6c0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-3-2 2-3 4-3 7a6 6 0 0 0 6 6z"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20z"/><path d="M12 10v4M12 17.5v.5"/></symbol>
+  <symbol id="i-lang" viewBox="0 0 24 24"><path d="M4 5h9M8.5 3v2M11 5c-1 4-4 7-7 8M6 9c1 2 3 4 6 5"/><path d="m13 21 4-10 4 10M14.5 17.5h5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
+  <symbol id="i-chevL" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-chevR" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+  <symbol id="i-radar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12l6-6"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></symbol>
+  <symbol id="i-news" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></symbol>
+ </defs>
+</svg>
 
 <header class="topbar">
-  <button class="icon-btn only-mobile" id="btnMenu" aria-label="Filtres">☰</button>
-  <div class="brand"><span class="logo">🛡️</span><div><b>CyberVeille</b><small id="liveState"><i class="dot"></i> Connexion…</small></div></div>
-  <div class="search"><span>⌕</span><input id="q" type="search" placeholder="Rechercher (titre, CVE, éditeur, ransomware…)" autocomplete="off"><kbd>/</kbd></div>
+  <button class="icon-btn only-mobile" id="btnMenu" aria-label="Filtres"><svg class="i"><use href="#i-menu"/></svg></button>
+  <div class="brand"><span class="logo"><svg class="i"><use href="#i-shield"/></svg></span><div><b>CyberVeille</b><small id="liveState"><i class="dot"></i> Connexion…</small></div></div>
+  <div class="search"><svg class="i"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Rechercher (titre, CVE, éditeur, ransomware…)" autocomplete="off"><kbd>/</kbd></div>
   <div class="top-actions">
-    <button class="btn ghost hide-mobile" id="btnRefresh" title="Recharger les dernières données">⟳ <span>Actualiser</span></button>
-    <button class="btn ghost" id="btnAlerts">✉ <span class="hide-mobile">Alertes e-mail</span></button>
-    <button class="btn primary" id="btnAI">✦ <span class="hide-mobile">Assistant IA</span></button>
+    <button class="btn ghost hide-mobile" id="btnRefresh" title="Lancer une collecte maintenant"><svg class="i"><use href="#i-refresh"/></svg> <span>Actualiser</span></button>
+    <button class="btn ghost" id="btnAlerts"><svg class="i"><use href="#i-mail"/></svg> <span class="hide-mobile">Alertes e-mail</span></button>
+    <button class="btn primary" id="btnAI"><svg class="i"><use href="#i-spark"/></svg> <span class="hide-mobile">Assistant IA</span></button>
   </div>
 </header>
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
-    <div class="side-head only-mobile"><b>Filtres</b><button class="icon-btn" id="btnCloseSide">✕</button></div>
+    <div class="side-head only-mobile"><b>Filtres</b><button class="icon-btn" id="btnCloseSide"><svg class="i"><use href="#i-x"/></svg></button></div>
 
 
     <section class="panel">
@@ -35,7 +63,7 @@
 
     <section class="panel">
       <h4>Impact géographique</h4>
-      <div class="seg" id="region"><button data-r="all" class="on">Toutes</button><button data-r="fr" title="Concerne la France">🇫🇷 France</button><button data-r="int" title="Hors France">🌍 Monde</button></div>
+      <div class="seg" id="region"><button data-r="all" class="on">Toutes</button><button data-r="fr" title="Concerne la France"><span class="flag-fr"></span> France</button><button data-r="int" title="Hors France"><svg class="i"><use href="#i-globe"/></svg> Monde</button></div>
     </section>
 
     <section class="panel">
@@ -48,9 +76,9 @@
     <section class="periodbar">
       <div class="seg" id="pmode"><button data-m="week" class="on">Semaine</button><button data-m="month">Mois</button><button data-m="year">Année</button></div>
       <div class="pnav">
-        <button class="icon-btn" id="pPrev" aria-label="Période précédente">‹</button>
+        <button class="icon-btn" id="pPrev" aria-label="Période précédente"><svg class="i"><use href="#i-chevL"/></svg></button>
         <b id="pLabel">—</b>
-        <button class="icon-btn" id="pNext" aria-label="Période suivante">›</button>
+        <button class="icon-btn" id="pNext" aria-label="Période suivante"><svg class="i"><use href="#i-chevR"/></svg></button>
       </div>
       <button class="btn small ghost" id="pToday">Aujourd'hui</button>
     </section>
@@ -58,40 +86,42 @@
 
     <section class="ai-brief" id="brief">
       <div class="brief-head">
-        <div><b>✦ Brief IA</b><small>IA locale dans votre navigateur · vos sources uniquement</small></div>
+        <div><b><svg class="i"><use href="#i-spark"/></svg> IA de veille</b><small>IA locale dans votre navigateur · vos sources uniquement</small></div>
         <div class="brief-actions">
           <select id="briefHours"><option value="24">24 h</option><option value="72">3 jours</option><option value="168">7 jours</option></select>
           <select id="briefStyle"><option value="court">Court</option><option value="standard" selected>Standard</option><option value="detaille">Détaillé</option></select>
           <button class="btn small" id="btnBrief">Générer</button>
         </div>
       </div>
-      <div class="brief-body" id="briefBody"><span class="muted">Cliquez sur « Générer » pour obtenir le résumé des dernières actualités.</span></div>
+      <form class="askbar" id="askForm"><input id="askQ" placeholder="Demandez à l'IA : « menaces sur la France ? », « détails sur 2 », « CVE-2026-… », « ransomware hôpital »…" autocomplete="off"><button class="btn primary"><svg class="i"><use href="#i-send"/></svg> Demander</button></form>
+      <div class="ask-out" id="askOut"></div>
+      <div class="brief-body" id="briefBody"><span class="muted">Ou cliquez sur « Générer » pour un résumé des menaces de la période.</span></div>
     </section>
 
     <div class="toolbar">
       <div class="tabs" id="viewTabs">
-        <button data-v="france" class="on">🇫🇷 France d'abord</button>
-        <button data-v="priority">🔥 Importance</button>
-        <button data-v="days">📅 Par jour</button>
-        <button data-v="timeline">⏱ Récent</button>
+        <button data-v="france" class="on"><span class="flag-fr"></span> France d'abord</button>
+        <button data-v="priority"><svg class="i"><use href="#i-flame"/></svg> Importance</button>
+        <button data-v="days"><svg class="i"><use href="#i-calendar"/></svg> Par jour</button>
+        <button data-v="timeline"><svg class="i"><use href="#i-clock"/></svg> Récent</button>
       </div>
       <div class="muted" id="countLbl"></div>
     </div>
 
-    <div id="newBanner" class="new-banner" hidden>↑ <b id="newCount">0</b> nouvelle(s) actualité(s) — afficher</div>
+    <div id="newBanner" class="new-banner" hidden><svg class="i"><use href="#i-up"/></svg> <b id="newCount">0</b> nouvelle(s) actualité(s) — afficher</div>
     <div id="feed" class="feed"></div>
-    <div id="empty" class="empty" hidden><div>🛰️</div><p>Aucune actualité ne correspond à vos filtres.</p></div>
+    <div id="empty" class="empty" hidden><div><svg class="i"><use href="#i-radar"/></svg></div><p>Aucune actualité ne correspond à vos filtres.</p></div>
   </main>
 </div>
 
 <!-- Assistant IA -->
 <aside class="drawer" id="aiDrawer" aria-hidden="true">
   <div class="drawer-head">
-    <div><b>✦ Assistant CyberVeille</b><small>IA locale · rien ne sort de votre navigateur</small></div>
-    <button class="icon-btn" data-close="aiDrawer">✕</button>
+    <div><b><svg class="i"><use href="#i-spark"/></svg> Assistant CyberVeille</b><small>IA locale · rien ne sort de votre navigateur</small></div>
+    <button class="icon-btn" data-close="aiDrawer"><svg class="i"><use href="#i-x"/></svg></button>
   </div>
   <div class="chat" id="chat">
-    <div class="msg bot">Bonjour 👋 Je connais toutes les actualités collectées sur vos 24 sources. Posez-moi une question ou choisissez une suggestion.</div>
+    <div class="msg bot">Bonjour. Je connais toutes les actualités collectées sur vos 24 sources. Posez-moi une question ou choisissez une suggestion.</div>
   </div>
   <div class="suggest" id="suggest">
     <button>Quelles sont les menaces critiques aujourd'hui ?</button>
@@ -99,23 +129,78 @@
     <button>Résume l'actualité ransomware de la semaine</button>
     <button>Quelles alertes a publié le CERT-FR ?</button>
   </div>
-  <form class="chat-input" id="chatForm"><textarea id="chatQ" rows="1" placeholder="Votre question…"></textarea><button class="btn primary">➤</button></form>
+  <form class="chat-input" id="chatForm"><textarea id="chatQ" rows="1" placeholder="Votre question…"></textarea><button class="btn primary" aria-label="Envoyer"><svg class="i"><use href="#i-send"/></svg></button></form>
 </aside>
 
 <!-- Alertes e-mail -->
 <div class="modal" id="mailModal" aria-hidden="true">
   <div class="modal-card">
-    <div class="drawer-head"><div><b>✉ Alertes e-mail</b><small>Configurées dans votre dépôt GitHub : votre adresse reste privée (Secrets), jamais publiée.</small></div><button class="icon-btn" data-close="mailModal">✕</button></div>
-    <div class="form" style="display:block">
-      <div id="mailInfo" class="muted">Chargement…</div>
-      <h4 style="margin:18px 0 6px">Modifier les réglages</h4>
-      <ol class="steps">
-        <li><b>Fréquence, gravité, sources, mots-clés, résumé</b> : ouvrez <code>config.json</code> dans votre dépôt GitHub → icône ✏️ → modifiez → « Commit changes ».</li>
-        <li><b>Changer d'adresse</b> : Settings → Secrets and variables → Actions → modifiez <code>MAIL_TO</code>.</li>
-        <li><b>Arrêter les e-mails</b> : mettez <code>"actif": false</code> dans <code>config.json</code>, ou supprimez le secret <code>MAIL_TO</code> pour effacer votre adresse.</li>
-      </ol>
-      <div class="form-actions"><a class="btn primary" id="cfgLink" target="_blank">Ouvrir config.json ↗</a></div>
+    <div class="drawer-head"><div><b><svg class="i"><use href="#i-mail"/></svg> Alertes e-mail</b><small id="mailSub">Choisissez ce que vous recevez, et quand.</small></div><button class="icon-btn" data-close="mailModal"><svg class="i"><use href="#i-x"/></svg></button></div>
+
+    <!-- Étape connexion (une seule fois) -->
+    <div class="form" id="connectBox" hidden>
+      <div class="set-section">
+        <h4><svg class="i"><use href="#i-lock"/></svg> Connexion à votre dépôt (une seule fois)</h4>
+        <p class="muted small">Le site est hébergé gratuitement sans serveur : pour enregistrer vos réglages, il a besoin d'une clé d'accès limitée à <b>ce dépôt uniquement</b>. Elle reste dans <b>ce navigateur</b>, rien n'est envoyé ailleurs qu'à GitHub.</p>
+        <ol class="steps small">
+          <li><a id="tokLink" target="_blank">Créer la clé sur GitHub</a></li>
+          <li><b>Repository access</b> → <i>Only select repositories</i> → <code id="repoName">cyberveille</code></li>
+          <li><b>Permissions</b> → Repository : <b>Contents</b>, <b>Secrets</b> et <b>Actions</b> → <i>Read and write</i></li>
+          <li>Expiration : au choix (ex. 1 an) → <b>Generate token</b> → copiez-la ci-dessous</li>
+        </ol>
+        <label>Clé d'accès (github_pat_…)<input id="tokIn" type="password" autocomplete="off" placeholder="github_pat_..."></label>
+        <div class="form-actions" style="margin-top:10px"><button class="btn primary" id="tokSave">Connecter</button></div>
+      </div>
     </div>
+
+    <!-- Réglages -->
+    <form id="mailForm" class="form" hidden>
+      <div class="set-section">
+        <h4>Destinataire</h4>
+        <label>Votre adresse e-mail<input type="email" id="mEmail" placeholder="vous@exemple.fr"></label>
+        <p class="small muted" id="emailState"></p>
+        <label class="switch"><input type="checkbox" id="mActive"> Recevoir les alertes</label>
+      </div>
+      <div class="set-section">
+        <h4>Fréquence</h4>
+        <div class="form" style="padding:0">
+          <label>Envoi<select id="mFreq">
+            <option value="instantane">Instantané (dès qu'une menace sort)</option>
+            <option value="horaire">Toutes les heures</option>
+            <option value="6h">Toutes les 6 heures</option>
+            <option value="quotidien">Une fois par jour</option>
+            <option value="hebdomadaire">Une fois par semaine</option></select></label>
+          <label id="lHour">Heure<input type="time" id="mHour" value="08:00"></label>
+          <label id="lDay">Jour<select id="mDay"><option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option><option value="0">Dimanche</option></select></label>
+        </div>
+      </div>
+      <div class="set-section">
+        <h4>Quelles menaces ?</h4>
+        <div class="form" style="padding:0">
+          <label>Gravité minimale<select id="mLevel"><option value="faible">Toutes les menaces</option><option value="moyen">Moyen et +</option><option value="eleve">Élevé et +</option><option value="critique">Critique uniquement</option></select></label>
+          <label>Zone<select id="mRegion"><option value="toutes">France + monde</option><option value="france">Concerne la France uniquement</option></select></label>
+          <label>Nombre max par e-mail<input type="number" id="mMax" min="5" max="50" value="20"></label>
+          <label>Résumé IA en tête<select id="mStyle"><option value="aucun">Aucun</option><option value="court">Court</option><option value="standard">Standard</option><option value="detaille">Détaillé</option></select></label>
+          <label class="full">Mots-clés (optionnel, séparés par des virgules)<input id="mKw" placeholder="ex. Fortinet, ransomware, santé"></label>
+        </div>
+        <p class="small muted" style="margin:10px 0 6px">Sources (aucune sélection = toutes)</p>
+        <div class="chips" id="mSources"></div>
+      </div>
+      <details class="set-section">
+        <summary>Expéditeur Gmail (à faire une fois)</summary>
+        <p class="small muted">Créez un <a href="https://myaccount.google.com/apppasswords" target="_blank">mot de passe d'application Google</a> (validation en 2 étapes requise). Ils sont stockés chiffrés dans les Secrets GitHub, jamais lisibles.</p>
+        <div class="form" style="padding:0">
+          <label>Adresse Gmail expéditrice<input type="email" id="mFrom" placeholder="vous@gmail.com"></label>
+          <label>Mot de passe d'application<input type="password" id="mPass" placeholder="16 lettres" autocomplete="new-password"></label>
+        </div>
+        <p class="small" id="smtpState"></p>
+      </details>
+      <div class="full form-actions">
+        <button type="button" class="btn danger" id="mUnsub">Supprimer mon adresse</button>
+        <button type="button" class="btn ghost" id="mDisconnect">Déconnecter ce navigateur</button>
+        <button class="btn primary" id="mSubmit">Enregistrer</button>
+      </div>
+    </form>
   </div>
 </div>
 

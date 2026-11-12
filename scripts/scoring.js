@@ -8,13 +8,13 @@ const RULES = [
   [/\bKEV\b|known exploited/i, 20, 'CISA KEV'],
   [/ransomware|ran[çc]ongiciel|rançongiciel|lockbit|akira|black ?basta|qilin|clop|play ransomware/i, 20, 'Ransomware'],
   [/\b(RCE|remote code execution|ex[ée]cution de code (à distance|arbitraire))\b/i, 20, 'RCE'],
-  [/\balerte\b|\bCERTFR-\d{4}-ALE/i, 25, 'Alerte CERT-FR'],
+  [/\bCERTFR-\d{4}-ALE|alerte de s[ée]curit[ée]/i, 25, 'Alerte CERT-FR'],
   [/\bCERTFR-\d{4}-AVI/i, 8, 'Avis CERT-FR'],
   [/critical|critique|urgent|emergency|patch now|corrigez|mettez à jour/i, 12, 'Critique'],
-  [/data breach|fuite de donn[ée]es|leak|exfiltr|vol de donn[ée]es|piratage|hacked|compromis|compromise/i, 14, 'Fuite / compromission'],
+  [/data breach|fuite de donn[ée]es|leak|exfiltr|vol de donn[ée]es|piratage|pirat[ée]|hacked|hackers?|compromis|compromise|cyberattaque|cyber-?attack|attaque informatique|intrusion|breach/i, 14, 'Fuite / compromission'],
   [/supply[- ]chain|chaîne d'approvisionnement/i, 14, 'Supply chain'],
   [/backdoor|porte dérobée|botnet|wiper|malware|maliciel|infostealer|stealer|trojan|cheval de troie/i, 10, 'Malware'],
-  [/phishing|hameçonnage|arnaque|scam|smishing/i, 6, 'Phishing'],
+  [/phishing|hameçonnage|arnaque|scam|smishing|escroquerie|fraude/i, 6, 'Phishing'],
   [/\bDDoS\b|déni de service/i, 8, 'DDoS'],
   [/authentication bypass|contournement d'authentification|privilege escalation|élévation de privil/i, 12, 'Bypass / Élévation'],
   [/APT\d*|state[- ]sponsored|étatique|espionnage|espionage|lazarus|sandworm|volt typhoon|salt typhoon/i, 12, 'APT'],
@@ -28,8 +28,7 @@ const LEVELS = [
   { id: 'critique', label: 'Critique', min: 70 },
   { id: 'eleve', label: 'Élevé', min: 50 },
   { id: 'moyen', label: 'Moyen', min: 30 },
-  { id: 'faible', label: 'Faible', min: 15 },
-  { id: 'info', label: 'Info', min: 0 },
+  { id: 'faible', label: 'Faible', min: 0 },
 ];
 
 function levelFromScore(score) {
@@ -66,4 +65,7 @@ function scoreArticle(article, source) {
   return { score, level: levelFromScore(score), tags: [...tags].slice(0, 6), cves, cvss };
 }
 
-module.exports = { scoreArticle, levelFromScore, LEVELS };
+// Une actu est conservée seulement si elle parle d'une menace, d'une faille ou d'une attaque.
+const THREAT_TAGS = new Set(['0-day', 'Exploitée', 'CISA KEV', 'Ransomware', 'RCE', 'Alerte CERT-FR', 'Avis CERT-FR', 'Fuite / compromission', 'Supply chain', 'Malware', 'Phishing', 'DDoS', 'Bypass / Élévation', 'APT', 'Vulnérabilité']);
+const isThreat = a => (a.cves && a.cves.length > 0) || (a.tags || []).some(t => THREAT_TAGS.has(t) || t.startsWith('CVSS'));
+module.exports = { isThreat, scoreArticle, levelFromScore, LEVELS };

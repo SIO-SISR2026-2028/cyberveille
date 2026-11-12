@@ -1,14 +1,17 @@
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const ORDER = { info: 0, faible: 1, moyen: 2, eleve: 3, critique: 4 };
+const REPO = (() => { const m = location.hostname.match(/^([^.]+)\.github\.io$/); const r = location.pathname.split('/').filter(Boolean)[0]; return m && r ? m[1] + '/' + r : 'SIO-SISR2026-2028/cyberveille'; })();
+const ic = n => `<svg class="i" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const FLAG = '<span class="flag-fr" aria-hidden="true"></span>';
 const LBL = { critique: 'Critique', eleve: 'Élevé', moyen: 'Moyen', faible: 'Faible', info: 'Info' };
-const LVLS = ['critique', 'eleve', 'moyen', 'faible', 'info'];
+const LVLS = ['critique', 'eleve', 'moyen', 'faible'];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const store = { get(k, d) { try { return JSON.parse(localStorage.getItem('cv_' + k)) ?? d; } catch { return d; } }, set(k, v) { try { localStorage.setItem('cv_' + k, JSON.stringify(v)); } catch {} } };
 
 const S = {
   meta: null, articles: [], pending: [], freshIds: new Set(), chatHistory: [], lastRefs: [],
   pmode: store.get('pmode', 'week'), anchor: new Date(), loadedMonths: new Set(), view: store.get('view2', 'france'), region: store.get('region', 'all'),
-  levels: new Set(store.get('levels', LVLS)), hidden: new Set(store.get('hidden', [])), q: '',
+  levels: new Set(store.get('levels', LVLS).filter(l => l !== 'info')), hidden: new Set(store.get('hidden', [])), q: '',
   ai: null,
 };
 const src = id => S.meta?.sources.find(s => s.id === id) || { name: id };
@@ -104,13 +107,13 @@ function card(a, i) {
   return `<article class="art ${S.freshIds.has(a.id) ? 'fresh' : ''}" style="--c:var(--${a.level});--s:${a.score};animation-delay:${Math.min(i, 12) * 25}ms" data-id="${a.id}">
     <div class="gauge"><b>${a.score}</b></div>
     <div>
-      <div class="art-meta"><span class="lvl">${LBL[a.level]}</span><b style="color:#cfd5e6">${esc(s.name)}</b>${a.france ? '<span class="fr-badge">🇫🇷 France</span>' : ''}${a.lang === 'en' ? '<span class="tr" title="Traduit automatiquement de l\'anglais">🌐 traduit</span>' : ''}<span title="${new Date(a.published).toLocaleString('fr-FR')}">· ${ago(a.published)}</span>${a.cvss ? `<span>· CVSS ${a.cvss}</span>` : ''}</div>
+      <div class="art-meta"><span class="lvl">${LBL[a.level]}</span><b style="color:#cfd5e6">${esc(s.name)}</b>${a.france ? `<span class="fr-badge">${FLAG} France</span>` : ''}${a.lang === 'en' ? `<span class="tr" title="Traduit automatiquement de l'anglais">${ic('lang')} traduit</span>` : ''}<span title="${new Date(a.published).toLocaleString('fr-FR')}">· ${ago(a.published)}</span>${a.cvss ? `<span>· CVSS ${a.cvss}</span>` : ''}</div>
       <h3><a href="${esc(a.link)}" target="_blank" rel="noopener">${esc(a.title)}</a></h3>
       ${a.summary ? `<p>${esc(a.summary)}</p>` : ''}
       ${a.titleOrig ? `<div class="orig" hidden><b>Original :</b> ${esc(a.titleOrig)}<br>${esc(a.summaryOrig || '')}</div>` : ''}
-      ${a.aiNote ? `<div class="ai-note">✦ ${esc(a.aiNote)}</div>` : ''}
+      ${a.aiNote ? `<div class="ai-note">${ic('spark')} ${esc(a.aiNote)}</div>` : ''}
       ${(a.tags?.length || a.cves?.length) ? `<div class="tags">${(a.cves || []).slice(0, 4).map(c => `<span class="tag cve" data-q="${c}">${c}</span>`).join('')}${(a.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
-      <div class="art-actions"><button data-act="more">Développer</button>${S.meta.ai ? '<button data-act="ask">✦ Demander à l\'IA</button>' : ''}${a.titleOrig ? '<button data-act="orig">🌐 Voir l\'original</button>' : ''}<button data-act="copy">⧉ Copier le lien</button></div>
+      <div class="art-actions"><button data-act="more">${ic('down')} Développer</button><button data-act="ask">${ic('spark')} Détails IA</button>${a.titleOrig ? `<button data-act="orig">${ic('lang')} Original</button>` : ''}<button data-act="copy">${ic('copy')} Copier le lien</button></div>
     </div></article>`;
 }
 function render() {
@@ -123,8 +126,8 @@ function render() {
     // Bloc France (classé par importance) puis le reste du monde (classé par importance)
     const fr = list.filter(a => a.france).sort((a, b) => rank(b) - rank(a)).slice(0, 200);
     const world = list.filter(a => !a.france).sort((a, b) => rank(b) - rank(a)).slice(0, 200);
-    if (fr.length) html += `<div class="day-head">🇫🇷 Concerne la France<span class="pill">${fr.length} actus</span><span class="bar"></span></div>` + fr.map(card).join('');
-    if (world.length) html += `<div class="day-head">🌍 Reste du monde<span class="pill">${world.length} actus</span><span class="bar"></span></div>` + world.map(card).join('');
+    if (fr.length) html += `<div class="day-head">${FLAG} Concerne la France<span class="pill">${fr.length} actus</span><span class="bar"></span></div>` + fr.map(card).join('');
+    if (world.length) html += `<div class="day-head">${ic('globe')} Reste du monde<span class="pill">${world.length} actus</span><span class="bar"></span></div>` + world.map(card).join('');
   } else if (S.view === 'priority') {
     html = list.sort((a, b) => rank(b) - rank(a)).slice(0, 300).map(card).join('');
   } else if (S.view === 'days') {
@@ -150,7 +153,7 @@ function renderStats() {
   const today = base.filter(a => Date.now() - a.published < 864e5).length;
   $('#stats').innerHTML = [
     ['critique', c('critique'), 'Critiques'], ['eleve', c('eleve'), 'Élevées'], ['moyen', c('moyen'), 'Moyennes'],
-    ['acc', base.filter(a => a.france && ORDER[a.level] >= 3).length, '🇫🇷 Graves en France'], ['faible', S.meta.sources.filter(s => s.status?.ok).length + '/' + S.meta.sources.length, 'Sources actives'],
+    ['acc', base.filter(a => a.france && ORDER[a.level] >= 3).length, 'Graves en France'], ['faible', S.meta.sources.filter(s => s.status?.ok).length + '/' + S.meta.sources.length, 'Sources actives'],
   ].map(([k, v, l]) => `<div class="stat" data-lvl="${k}" style="--c:var(--${k})"><b>${v}</b><span>${l}</span></div>`).join('');
 }
 function renderSidebarCounts() {
@@ -158,14 +161,14 @@ function renderSidebarCounts() {
   $('#levelFilters').innerHTML = LVLS.map(l => `<button class="lvl-chip ${S.levels.has(l) ? '' : 'off'}" data-l="${l}"><span class="sw" style="background:var(--${l})"></span>${LBL[l]}<span class="n">${recent.filter(a => a.level === l).length}</span></button>`).join('');
   const row = s => `<label class="src" title="${s.status?.ok ? 'OK — vérifié ' + ago(s.status.lastCheck) : esc(s.status?.lastError || 'En attente')}"><input type="checkbox" data-s="${s.id}" ${S.hidden.has(s.id) ? '' : 'checked'}><span class="st ${s.status ? (s.status.ok ? 'ok' : 'ko') : ''}"></span>${esc(s.name)}<span class="c">${recent.filter(a => a.sourceId === s.id).length}</span></label>`;
   const g = (t, f) => `<div class="src-group">${t}</div>` + S.meta.sources.filter(f).map(row).join('');
-  $('#sourceList').innerHTML = g('🇫🇷 Officiel', s => s.type === 'officiel') + g('🇫🇷 Médias', s => s.region === 'fr' && s.type === 'media') + g('🌍 International', s => s.region === 'int');
+  $('#sourceList').innerHTML = g(ic('building') + ' Officiel', s => s.type === 'officiel') + g(ic('news') + ' Médias FR', s => s.region === 'fr' && s.type === 'media') + g(ic('globe') + ' International', s => s.region === 'int');
 }
 
 /* ---------- Data loading (fichiers statiques mis à jour par GitHub Actions) ---------- */
 async function fetchData() {
   const t = Date.now();
   const [meta, articles] = await Promise.all([api('data/meta.json?t=' + t), api('data/articles.json?t=' + t)]);
-  meta.ai = true; return { meta, articles };
+  meta.ai = true; articles.forEach(x => { if (x.level === 'info') x.level = 'faible'; }); return { meta, articles };
 }
 function setLive() {
   const m = Math.round((Date.now() - S.meta.updated) / 60000);
@@ -177,7 +180,7 @@ async function load() {
   catch { S.meta = { updated: Date.now(), sources: [], ai: true }; S.articles = []; $('#feed').innerHTML = ''; toast("Pas encore de données : la première collecte GitHub n'a pas encore tourné."); }
   S.ai = LocalAI.create(() => S.articles, S.meta.sources);
   await changePeriod(); setLive();
-  setInterval(poll, 3 * 60000); setInterval(setLive, 60000);
+  setInterval(poll, 60000); setInterval(setLive, 60000);
 }
 async function poll(manual) {
   try {
@@ -188,11 +191,11 @@ async function poll(manual) {
       S.pending.push(...fresh.filter(a => !S.pending.some(p => p.id === a.id)));
       $('#newCount').textContent = S.pending.length; $('#newBanner').hidden = false;
       const crit = fresh.filter(a => ORDER[a.level] >= 3);
-      if (crit.length) toast(`⚠️ ${crit.length} nouvelle(s) actu(s) ${LBL[crit[0].level].toLowerCase()} : ${crit[0].title.slice(0, 70)}…`);
+      if (crit.length) toast(`${crit.length} nouvelle(s) menace(s) ${LBL[crit[0].level].toLowerCase()} : ${crit[0].title.slice(0, 70)}…`);
       document.title = `(${S.pending.length}) CyberVeille`;
     } else if (manual) toast('Aucune nouveauté depuis la dernière collecte');
     renderSidebarCounts(); renderStats();
-  } catch (e) { if (manual) toast('⚠️ ' + e.message); }
+  } catch (e) { if (manual) toast(e.message); }
 }
 function flushPending() {
   const ids = new Set(S.articles.map(a => a.id));
@@ -212,7 +215,15 @@ function ask(q) {
   if (!q.trim()) return;
   open('aiDrawer'); addMsg('user', esc(q));
   const t = addMsg('bot', '<span class="typing"><span></span><span></span><span></span></span>');
-  setTimeout(() => { const r = S.ai.ask(q); t.innerHTML = md(r.answer, r.refs); }, 350);
+  setTimeout(() => { const r = S.ai.ask(q, S.lastRefs); if (r.refsRaw) S.lastRefs = r.refsRaw; t.innerHTML = md(r.answer, r.refs); }, 300);
+}
+function askInline(q) {
+  if (!q.trim()) return;
+  const r = S.ai.ask(q, S.lastRefs);
+  if (r.refsRaw) S.lastRefs = r.refsRaw;
+  const d = document.createElement('div'); d.className = 'qa';
+  d.innerHTML = `<div class="q">${ic('chevR')} ${esc(q)}</div>${md(r.answer, r.refs)}`;
+  $('#askOut').prepend(d);
 }
 function brief() {
   const since = Date.now() - $('#briefHours').value * 36e5;
@@ -222,20 +233,85 @@ function brief() {
   $('#btnBrief').textContent = 'Régénérer';
 }
 
-/* ---------- Alertes e-mail (lecture seule) ---------- */
+/* ---------- Alertes e-mail : interface de réglage ---------- */
+async function gh(path, opts = {}) {
+  const tok = store.get('ghToken', null);
+  const r = await fetch('https://api.github.com/repos/' + REPO + path, {
+    method: opts.method || 'GET',
+    headers: { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (r.status === 404 && opts.allow404) return null;
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 401) throw new Error('Clé invalide ou expirée');
+    if (r.status === 403) throw new Error('Permission manquante sur la clé (Contents, Secrets et Actions en lecture/écriture)');
+    throw new Error(j.message || 'GitHub ' + r.status);
+  }
+  return r.status === 204 ? {} : r.json().catch(() => ({}));
+}
+const b64 = { enc: s => btoa(unescape(encodeURIComponent(s))), dec: s => decodeURIComponent(escape(atob(s.replace(/\n/g, '')))) };
+let sodium = null;
+async function setSecret(name, value) {
+  if (!sodium) { sodium = (await import('https://esm.sh/libsodium-wrappers@0.7.13')).default; await sodium.ready; }
+  const { key, key_id } = await gh('/actions/secrets/public-key');
+  const enc = sodium.crypto_box_seal(sodium.from_string(value), sodium.from_base64(key, sodium.base64_variants.ORIGINAL));
+  await gh('/actions/secrets/' + name, { method: 'PUT', body: { encrypted_value: sodium.to_base64(enc, sodium.base64_variants.ORIGINAL), key_id } });
+}
+const hasSecret = async n => !!(await gh('/actions/secrets/' + n, { allow404: true }));
+const mask = e => e.replace(/^(.{2}).*(@.*)$/, '$1•••$2');
+let CFG = null, CFG_SHA = null;
+async function saveCfg(msg) {
+  const r = await gh('/contents/config.json', { method: 'PUT', body: { message: msg, content: b64.enc(JSON.stringify(CFG, null, 2) + '\n'), sha: CFG_SHA } });
+  CFG_SHA = r.content && r.content.sha;
+}
+function syncFreq() { const f = $('#mFreq').value; $('#lHour').style.display = ['quotidien', 'hebdomadaire'].includes(f) ? '' : 'none'; $('#lDay').style.display = f === 'hebdomadaire' ? '' : 'none'; }
 async function openMail() {
-  const m = location.hostname.match(/^([^.]+)\.github\.io$/), repo = location.pathname.split('/').filter(Boolean)[0];
-  const base = m && repo ? `https://github.com/${m[1]}/${repo}` : null;
-  $('#cfgLink').href = base ? base + '/edit/main/config.json' : '#';
   open('mailModal');
+  const tok = store.get('ghToken', null);
+  $('#connectBox').hidden = !!tok; $('#mailForm').hidden = !tok;
+  $('#repoName').textContent = REPO;
+  $('#tokLink').href = 'https://github.com/settings/personal-access-tokens/new';
+  if (!tok) { $('#mailSub').textContent = 'Connexion à votre dépôt requise une seule fois.'; return; }
+  $('#mailSub').textContent = 'Chargement des réglages…';
   try {
-    const cfg = base ? (await (await fetch(`https://raw.githubusercontent.com/${m[1]}/${repo}/main/config.json?t=` + Date.now())).json()).email : null;
-    if (!cfg) { $('#mailInfo').textContent = 'Réglages lisibles une fois le site publié sur GitHub Pages.'; return; }
-    const f = { instantane: '⚡ Instantané', horaire: 'Toutes les heures', '6h': 'Toutes les 6 h', quotidien: 'Quotidien à ' + cfg.heure, hebdomadaire: 'Hebdomadaire' };
-    $('#mailInfo').innerHTML = `<div class="cfg"><span>État</span><b>${cfg.actif ? '✅ Actif' : '⏸ Désactivé'}</b><span>Fréquence</span>${f[cfg.frequence] || cfg.frequence}
-      <span>Gravité min.</span>${LBL[cfg.gravite_minimale] || 'Toutes'}<span>Zone</span>${cfg.zone}<span>Sources</span>${cfg.sources?.length ? cfg.sources.map(id => src(id).name).join(', ') : 'Toutes'}
-      <span>Mots-clés</span>${cfg.mots_cles?.length ? esc(cfg.mots_cles.join(', ')) : '—'}<span>Résumé</span>${cfg.resume}<span>Max / e-mail</span>${cfg.max_actus}</div>`;
-  } catch { $('#mailInfo').textContent = 'Impossible de lire config.json.'; }
+    const f = await gh('/contents/config.json');
+    CFG = JSON.parse(b64.dec(f.content)); CFG_SHA = f.sha;
+    const c = CFG.email || {};
+    $('#mActive').checked = c.actif !== false; $('#mFreq').value = c.frequence || 'quotidien';
+    $('#mHour').value = c.heure || '08:00'; $('#mDay').value = c.jour_semaine ?? 1;
+    $('#mLevel').value = c.gravite_minimale === 'info' ? 'faible' : (c.gravite_minimale || 'moyen');
+    $('#mRegion').value = c.zone === 'france' ? 'france' : 'toutes'; $('#mMax').value = c.max_actus || 20;
+    $('#mStyle').value = c.resume || 'standard'; $('#mKw').value = (c.mots_cles || []).join(', ');
+    $('#mSources').innerHTML = S.meta.sources.map(s => `<span class="chip ${(c.sources || []).includes(s.id) ? 'on' : ''}" data-id="${s.id}">${esc(s.name)}</span>`).join('');
+    $('#mEmail').value = '';
+    const [mail, su, sp] = await Promise.all([hasSecret('MAIL_TO'), hasSecret('SMTP_USER'), hasSecret('SMTP_PASS')]);
+    $('#emailState').innerHTML = mail ? `<span class="status-ok">${ic('check')} Adresse enregistrée : ${esc(c.adresse_masquee || '••••')}</span> — saisissez-en une autre pour la remplacer.` : `<span class="status-ko">${ic('alert')} Aucune adresse enregistrée.</span>`;
+    $('#smtpState').innerHTML = su && sp ? `<span class="status-ok">${ic('check')} Expéditeur configuré</span>` : `<span class="status-ko">${ic('alert')} Expéditeur non configuré : les e-mails ne peuvent pas partir.</span>`;
+    if (!(su && sp)) $('#smtpState').closest('details').open = true;
+    $('#mailSub').textContent = "Les changements s'appliquent dès la prochaine collecte (≤ 5 min).";
+    syncFreq();
+  } catch (e) { $('#mailSub').textContent = e.message; if (/invalide/.test(e.message)) { store.set('ghToken', null); openMail(); } }
+}
+async function saveMail(e) {
+  e.preventDefault();
+  const btn = $('#mSubmit'); btn.disabled = true; btn.textContent = 'Enregistrement…';
+  try {
+    const email = $('#mEmail').value.trim(), from = $('#mFrom').value.trim(), pass = $('#mPass').value.replace(/\s/g, '');
+    if (email) await setSecret('MAIL_TO', email);
+    if (from) await setSecret('SMTP_USER', from);
+    if (pass) await setSecret('SMTP_PASS', pass);
+    CFG.email = Object.assign({}, CFG.email || {}, {
+      actif: $('#mActive').checked, frequence: $('#mFreq').value, heure: $('#mHour').value, jour_semaine: +$('#mDay').value,
+      gravite_minimale: $('#mLevel').value, zone: $('#mRegion').value, max_actus: +$('#mMax').value, resume: $('#mStyle').value,
+      mots_cles: $('#mKw').value.split(',').map(s => s.trim()).filter(Boolean),
+      sources: $$('#mSources .chip.on').map(c => c.dataset.id),
+    }, email ? { adresse_masquee: mask(email) } : {});
+    await saveCfg('Réglages des alertes (depuis le site)');
+    $('#mEmail').value = $('#mFrom').value = $('#mPass').value = '';
+    toast('Réglages enregistrés'); closeAll();
+  } catch (err) { toast(err.message); }
+  btn.disabled = false; btn.textContent = 'Enregistrer';
 }
 
 /* ---------- Events ---------- */
@@ -266,13 +342,20 @@ function bind() {
     const a = S.articles.find(x => x.id === art.dataset.id);
     const cve = e.target.closest('.cve'); if (cve) { $('#q').value = S.q = cve.dataset.q; render(); return; }
     const act = e.target.closest('[data-act]')?.dataset.act;
-    if (act === 'more') { art.classList.toggle('open'); e.target.textContent = art.classList.contains('open') ? 'Réduire' : 'Développer'; }
-    if (act === 'ask') ask(`Explique-moi cette actualité, son impact et les actions recommandées : « ${a.title} » (${src(a.sourceId).name})`);
-    if (act === 'orig') { const o = art.querySelector('.orig'); o.hidden = !o.hidden; e.target.textContent = o.hidden ? "🌐 Voir l'original" : '🌐 Masquer l\'original'; }
+    if (act === 'more') { art.classList.toggle('open'); e.target.closest('button').innerHTML = art.classList.contains('open') ? ic('up') + ' Réduire' : ic('down') + ' Développer'; }
+    if (act === 'ask') { S.lastRefs = [a]; ask('détails sur 1'); }
+    if (act === 'orig') { const o = art.querySelector('.orig'); o.hidden = !o.hidden; e.target.closest('button').innerHTML = ic('lang') + (o.hidden ? ' Original' : ' Masquer l\'original'); }
     if (act === 'copy') navigator.clipboard.writeText(a.link).then(() => toast('Lien copié'));
   };
   $('#newBanner').onclick = flushPending;
-  $('#btnRefresh').onclick = () => poll(true);
+  $('#btnRefresh').onclick = async () => {
+    if (!store.get('ghToken', null)) { poll(true); return; }
+    try {
+      await gh('/actions/workflows/veille.yml/dispatches', { method: 'POST', body: { ref: 'main' } });
+      toast('Collecte lancée : nouvelles actus dans 1 à 2 minutes');
+      let n = 0; const t = setInterval(() => { poll(false); if (++n >= 6) clearInterval(t); }, 30000);
+    } catch (e) { toast(e.message); poll(true); }
+  };
 
   $('#btnAI').onclick = () => { open('aiDrawer'); setTimeout(() => $('#chatQ').focus(), 300); };
   $('#suggest').onclick = e => e.target.tagName === 'BUTTON' && ask(e.target.textContent);
@@ -280,8 +363,27 @@ function bind() {
   $('#chatQ').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#chatForm').requestSubmit(); } };
   $('#chatQ').oninput = e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; };
   $('#btnBrief').onclick = brief;
+  $('#askForm').onsubmit = e => { e.preventDefault(); askInline($('#askQ').value); $('#askQ').value = ''; };
 
   $('#btnAlerts').onclick = openMail;
+  $('#mFreq').onchange = syncFreq;
+  $('#mSources').onclick = e => e.target.classList.contains('chip') && e.target.classList.toggle('on');
+  $('#mailForm').onsubmit = saveMail;
+  $('#tokSave').onclick = async () => {
+    const t = $('#tokIn').value.trim(); if (!t) return;
+    store.set('ghToken', t); $('#tokIn').value = '';
+    try { await gh(''); toast('Connecté'); openMail(); } catch (e) { store.set('ghToken', null); toast(e.message); }
+  };
+  $('#mDisconnect').onclick = () => { store.set('ghToken', null); toast('Clé retirée de ce navigateur'); closeAll(); };
+  $('#mUnsub').onclick = async () => {
+    if (!confirm('Supprimer votre adresse ? Plus aucun e-mail ne sera envoyé.')) return;
+    try {
+      await gh('/actions/secrets/MAIL_TO', { method: 'DELETE', allow404: true });
+      CFG.email = Object.assign({}, CFG.email, { actif: false }); delete CFG.email.adresse_masquee;
+      await saveCfg('Désabonnement (depuis le site)');
+      toast('Adresse supprimée'); closeAll();
+    } catch (e) { toast(e.message); }
+  };
 }
 
 /* ---------- Boot ---------- */

@@ -25,10 +25,7 @@ module.exports = [
   { id: 'lemagit', name: 'LeMagIT', url: 'https://www.lemagit.fr/', region: 'fr', type: 'media', weight: 7, feeds: ['https://www.lemagit.fr/rss/ContentSyndication.xml'] },
   { id: 'lmi', name: 'Le Monde Informatique', url: 'https://www.lemondeinformatique.fr/', region: 'fr', type: 'media', weight: 6, feeds: ['https://www.lemondeinformatique.fr/flux-rss/thematique/securite/rss.xml', 'https://www.lemondeinformatique.fr/flux-rss/rss.xml'] },
   { id: 'itconnect', name: 'IT-Connect', url: 'https://www.it-connect.fr/', region: 'fr', type: 'media', weight: 7, feeds: ['https://www.it-connect.fr/feed/'] },
-  { id: 'silicon', name: 'Silicon.fr', url: 'https://www.silicon.fr/', region: 'fr', type: 'media', weight: 5, feeds: ['https://www.silicon.fr/feed'] },
-  { id: 'solnum', name: 'Solutions Numériques', url: 'https://www.solutions-numeriques.com/', region: 'fr', type: 'media', weight: 5, feeds: ['https://www.solutions-numeriques.com/feed/'] },
   { id: 'zdnetfr', name: 'ZDNet France', url: 'https://www.zdnet.fr/', region: 'fr', type: 'media', weight: 6, feeds: ['https://www.zdnet.fr/feeds/rss/actualites/', 'https://www.zdnet.fr/feeds/rss/'] },
-  { id: 'usinedigitale', name: "L'Usine Digitale", url: 'https://www.usine-digitale.fr/', region: 'fr', type: 'media', weight: 4, feeds: ['https://www.usine-digitale.fr/rss'] },
   { id: 'riskintel', name: 'RiskIntel', url: 'https://www.riskintel.fr/', region: 'fr', type: 'media', weight: 6, feeds: ['https://www.riskintel.fr/feed/'] },
 
   // 🌍 International
