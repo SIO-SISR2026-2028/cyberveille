@@ -221,24 +221,22 @@ const userMsg = (refs, q) => `Voici les articles d'actualité cybersécurité pu
 function llmStatus(html) { $$('.llm-status').forEach(e => e.innerHTML = html); }
 async function loadLLM(size) {
   if (LLM.loading) return;
-  if (!navigator.gpu) { llmStatus(`${ic('alert')} Votre navigateur ne gère pas WebGPU (essayez Chrome ou Edge à jour). IA simple utilisée.`); return; }
+  if (!navigator.gpu) { llmStatus(`${ic('alert')} Ce navigateur ne gère pas WebGPU : utilisez Chrome ou Edge à jour pour l'IA complète.`); return; }
   LLM.loading = true; LLM.engine = null;
-  $$('.llm-btn').forEach(b => b.disabled = true);
   try {
     const webllm = await import('https://esm.run/@mlc-ai/web-llm@0.2.88');
     const adapter = await navigator.gpu.requestAdapter();
     const f16 = adapter && adapter.features.has('shader-f16');
     const modelId = f16 ? LLM_MODELS[size].id : LLM_MODELS[size].id.replace('q4f16_1', 'q4f32_1');
     LLM.engine = await webllm.CreateMLCEngine(modelId, {
-      initProgressCallback: p => llmStatus(`Téléchargement / chargement du modèle : ${Math.round((p.progress || 0) * 100)} % <span class="muted">(une seule fois, ensuite en cache)</span>`),
+      initProgressCallback: p => llmStatus(`Chargement de l'IA : ${Math.round((p.progress || 0) * 100)} % <span class="muted">(premier lancement uniquement, ensuite instantané)</span>`),
     });
-    LLM.size = size; store.set('llmSize', size);
-    llmStatus(`${ic('check')} IA avancée active : ${LLM_MODELS[size].label.split(' (')[0]} · 100 % dans votre navigateur`);
+    LLM.size = size;
+    llmStatus(`${ic('check')} IA prête · 100 % dans votre navigateur`);
   } catch (e) {
-    llmStatus(`${ic('alert')} Impossible de charger l'IA avancée (${esc(e.message)}). IA simple utilisée.`);
+    llmStatus(`${ic('alert')} Impossible de charger l'IA (${esc(e.message)}).`);
   }
   LLM.loading = false;
-  $$('.llm-btn').forEach(b => b.disabled = false);
 }
 
 // Choisit les articles servant de contexte (recherche locale), puis laisse le modèle rédiger.
@@ -256,6 +254,7 @@ const ctxText = refs => refs.map((a, i) => `[${i + 1}] ${LBL[a.level]} ${a.score
 const refLinks = refs => refs.map(a => ({ link: a.link, title: a.title, source: src(a.sourceId).name }));
 
 async function answer(q, el, history) {
+  if (LLM.loading) { el.innerHTML = '<span class="muted small">L\'IA termine son chargement…</span>'; while (LLM.loading) await new Promise(r => setTimeout(r, 500)); }
   const { base, refs } = contextFor(q);
   if (base.refsRaw && base.refsRaw.length) S.lastRefs = base.refsRaw;
   if (!LLM.engine) { el.innerHTML = md(base.answer, base.refs); return base.answer; }
@@ -441,9 +440,7 @@ function bind() {
   $('#chatQ').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#chatForm').requestSubmit(); } };
   $('#chatQ').oninput = e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; };
   $('#btnBrief').onclick = brief;
-  $$('.llm-btn').forEach(b => b.onclick = () => loadLLM(b.previousElementSibling.value));
-  $$('.llm-size').forEach(s => { s.innerHTML = Object.entries(LLM_MODELS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join(''); s.value = store.get('llmSize', 'standard'); });
-  if (store.get('llmSize', null) && navigator.gpu) loadLLM(store.get('llmSize'));
+  loadLLM('standard');
   $('#askForm').onsubmit = e => { e.preventDefault(); askInline($('#askQ').value); $('#askQ').value = ''; };
 
   $('#btnAlerts').onclick = openMail;
