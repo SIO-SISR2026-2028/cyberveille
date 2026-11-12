@@ -174,14 +174,14 @@ async function load() {
   try { ({ meta: S.meta, articles: S.articles } = await fetchData()); }
   catch { S.meta = { updated: Date.now(), sources: [], ai: true }; S.articles = []; $('#feed').innerHTML = ''; toast("Pas encore de données : la première collecte GitHub n'a pas encore tourné."); }
   S.ai = LocalAI.create(() => S.articles, S.meta.sources);
-  await changePeriod(); setLive(); loadBrief();
+  await changePeriod(); setLive();
   setInterval(poll, 60000); setInterval(setLive, 60000);
 }
 async function poll(manual) {
   try {
     const d = await fetchData(), ids = new Set(S.articles.map(a => a.id));
     const fresh = d.articles.filter(a => !ids.has(a.id));
-    S.meta = d.meta; setLive(); loadBrief();
+    S.meta = d.meta; setLive();
     if (fresh.length) {
       S.pending.push(...fresh.filter(a => !S.pending.some(p => p.id === a.id)));
       $('#newCount').textContent = S.pending.length; $('#newBanner').hidden = false;
@@ -291,21 +291,6 @@ async function askInline(q) {
   const out = await answer(q, d.querySelector('.a'), inlineHist);
   inlineHist.push({ role: 'user', content: q }, { role: 'assistant', content: out });
 }
-// Brief rédigé par l'IA sur les serveurs GitHub (data/brief.json)
-async function loadBrief() {
-  try { S.brief = await api('data/brief.json?t=' + Date.now()); } catch { S.brief = {}; }
-  showBrief();
-}
-function showBrief() {
-  const b = (S.brief || {})[$('#briefHours').value];
-  if (!b || !b.text) { $('#briefBody').innerHTML = '<span class="muted">Le brief sera rédigé lors de la prochaine collecte.</span>'; return; }
-  const byId = new Map(S.articles.map(a => [a.id, a]));
-  const refs = b.refs.map(id => byId.get(id)).filter(Boolean);
-  S.lastRefs = refs;
-  $('#briefBody').innerHTML = md(b.text, refs.map(a => ({ link: a.link, title: a.title, source: src(a.sourceId).name })))
-    + `<div class="muted small" style="margin-top:8px">${ic('spark')} Rédigé par l'IA sur les serveurs GitHub ${ago(b.at)} · à partir de ${refs.length} articles</div>`;
-}
-
 /* ---------- Alertes e-mail : interface de réglage ---------- */
 async function gh(path, opts = {}) {
   const tok = store.get('ghToken', null);
@@ -435,7 +420,6 @@ function bind() {
   $('#chatForm').onsubmit = e => { e.preventDefault(); const q = $('#chatQ').value; $('#chatQ').value = ''; ask(q); };
   $('#chatQ').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#chatForm').requestSubmit(); } };
   $('#chatQ').oninput = e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; };
-  $('#briefHours').onchange = showBrief;
   $('#pollKeyBtn').onclick = e => { e.preventDefault();
     const k = prompt('Clé Pollinations facultative (gratuite sur enter.pollinations.ai) pour supprimer la limite de 45 s.\nElle reste uniquement dans ce navigateur. Laissez vide pour la retirer.', store.get('pollKey', '') || '');
     if (k === null) return; store.set('pollKey', k.trim() || null); toast(k.trim() ? 'Clé enregistrée dans ce navigateur' : 'Clé retirée');

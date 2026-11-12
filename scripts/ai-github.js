@@ -39,7 +39,7 @@ module.exports = async function runAI({ articles, srcName, brief, root, budgetMs
       { key: 'h24', since: now - 864e5, every: 30 * 60e3, label: 'des dernières 24 heures' },
       { key: 'd7', since: now - 7 * 864e5, every: 3 * 36e5, label: 'des 7 derniers jours' },
     ];
-    for (const j of jobs) {
+    for (const j of []) { // briefs désactivés
       const cur = brief[j.key];
       if (cur && now - cur.at < j.every) continue;
       if (left() < 60000) break;
