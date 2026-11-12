@@ -230,3 +230,19 @@ input[type=password]{background:var(--bg2);border:1px solid var(--line);color:va
 
 .llm-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}.llm-row select{padding:6px 8px}.llm-status{flex:1 1 260px}
 .llm-status .i{width:14px;height:14px}
+
+/* Ouverture des panneaux sans dépendre des transitions (certains navigateurs les bloquent) */
+@keyframes cv-in-left{from{transform:translateX(-24px)}to{transform:none}}
+@keyframes cv-in-right{from{transform:translateX(24px)}to{transform:none}}
+@keyframes cv-in-up{from{transform:translateY(12px)}to{transform:none}}
+.drawer{transform:none;transition:none;display:none}
+.drawer.on{display:flex;animation:cv-in-right .25s ease-out}
+.modal-card{opacity:1;transform:none;transition:none}
+.modal{display:none}
+.modal.on{display:grid}
+.modal.on .modal-card{animation:cv-in-up .25s ease-out}
+.scrim{transition:none}
+@media (max-width:860px){
+  .sidebar{transform:none;transition:none;display:none}
+  .sidebar.on{display:flex;animation:cv-in-left .25s ease-out}
+}
