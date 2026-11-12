@@ -2,141 +2,141 @@
  "sources": {
   "certfr": {
    "ok": true,
-   "lastCheck": 1794478316644,
+   "lastCheck": 1794478710271,
    "lastError": null,
    "feedUrl": "https://cert.cyber.gouv.fr/feed/"
   },
   "cnil": {
    "ok": true,
-   "lastCheck": 1794478316947,
+   "lastCheck": 1794478710658,
    "lastError": null,
    "feedUrl": "https://www.cnil.fr/fr/rss.xml"
   },
   "numerama": {
    "ok": true,
-   "lastCheck": 1794478317027,
+   "lastCheck": 1794478710872,
    "lastError": null,
    "feedUrl": "https://www.numerama.com/cyberguerre/feed/"
   },
   "zataz": {
    "ok": true,
-   "lastCheck": 1794478317148,
+   "lastCheck": 1794478710875,
    "lastError": null,
    "feedUrl": "https://www.zataz.com/feed/"
   },
   "cybermalveillance": {
    "ok": true,
-   "lastCheck": 1794478317167,
+   "lastCheck": 1794478710380,
    "lastError": null,
    "feedUrl": "https://www.cybermalveillance.gouv.fr/feed/atom-flux-actualites"
   },
   "cyberattaque": {
    "ok": true,
-   "lastCheck": 1794478317451,
+   "lastCheck": 1794478711297,
    "lastError": null,
    "feedUrl": "https://www.cyberattaque.org/feed/"
   },
   "lemagit": {
    "ok": true,
-   "lastCheck": 1794478317593,
+   "lastCheck": 1794478711414,
    "lastError": null,
    "feedUrl": "https://www.lemagit.fr/rss/ContentSyndication.xml"
   },
   "bleeping": {
    "ok": true,
-   "lastCheck": 1794478318002,
+   "lastCheck": 1794478711722,
    "lastError": null,
    "feedUrl": "https://www.bleepingcomputer.com/feed/"
   },
   "zdnetfr": {
    "ok": true,
-   "lastCheck": 1794478318049,
+   "lastCheck": 1794478711875,
    "lastError": null,
    "feedUrl": "https://www.zdnet.fr/feeds/rss/actualites/"
   },
   "undernews": {
    "ok": true,
-   "lastCheck": 1794478318127,
+   "lastCheck": 1794478711627,
    "lastError": null,
    "feedUrl": "https://www.undernews.fr/feed"
   },
   "thn": {
    "ok": true,
-   "lastCheck": 1794478318103,
+   "lastCheck": 1794478711941,
    "lastError": null,
    "feedUrl": "https://feeds.feedburner.com/TheHackersNews"
   },
   "securityweek": {
    "ok": true,
-   "lastCheck": 1794478318113,
+   "lastCheck": 1794478711843,
    "lastError": null,
    "feedUrl": "https://www.securityweek.com/feed/"
   },
   "usinedigitale": {
    "ok": false,
-   "lastCheck": 1794478318587,
+   "lastCheck": 1794478712401,
    "lastError": "Status code 403"
   },
   "gsm": {
    "ok": true,
-   "lastCheck": 1794478318249,
+   "lastCheck": 1794478712146,
    "lastError": null,
    "feedUrl": "https://www.globalsecuritymag.fr/spip.php?page=backend"
   },
   "therecord": {
    "ok": true,
-   "lastCheck": 1794478318209,
+   "lastCheck": 1794478711850,
    "lastError": null,
    "feedUrl": "https://therecord.media/feed"
   },
   "darkreading": {
    "ok": true,
-   "lastCheck": 1794478318388,
+   "lastCheck": 1794478712244,
    "lastError": null,
    "feedUrl": "https://www.darkreading.com/rss.xml"
   },
   "lmi": {
    "ok": true,
-   "lastCheck": 1794478318489,
+   "lastCheck": 1794478712197,
    "lastError": null,
    "feedUrl": "https://www.lemondeinformatique.fr/flux-rss/thematique/securite/rss.xml"
   },
   "cybergend": {
    "ok": false,
-   "lastCheck": 1794478318516,
+   "lastCheck": 1794478712212,
    "lastError": "Status code 403"
   },
   "nextink": {
    "ok": true,
-   "lastCheck": 1794478318449,
+   "lastCheck": 1794478712973,
    "lastError": null,
    "feedUrl": "https://next.ink/feed/"
   },
   "silicon": {
    "ok": true,
-   "lastCheck": 1794478318586,
+   "lastCheck": 1794478712318,
    "lastError": null,
    "feedUrl": "https://www.silicon.fr/feed"
   },
   "anssi": {
    "ok": false,
-   "lastCheck": 1794478319406,
+   "lastCheck": 1794478713354,
    "lastError": "Status code 404"
   },
   "itconnect": {
    "ok": true,
-   "lastCheck": 1794478318957,
+   "lastCheck": 1794478712898,
    "lastError": null,
    "feedUrl": "https://www.it-connect.fr/feed/"
   },
   "riskintel": {
    "ok": false,
-   "lastCheck": 1794478318408,
+   "lastCheck": 1794478712157,
    "lastError": "Status code 404"
   },
   "solnum": {
    "ok": false,
-   "lastCheck": 1794478319506,
+   "lastCheck": 1794478713421,
    "lastError": "Feed not recognized as RSS 1 or 2."
   }
  }
