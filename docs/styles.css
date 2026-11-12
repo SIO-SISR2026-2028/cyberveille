@@ -256,3 +256,13 @@ input[type=password]{background:var(--bg2);border:1px solid var(--line);color:va
 ::-webkit-scrollbar-button{display:none;height:0;width:0}
 ::-webkit-scrollbar-corner{background:transparent}
 .sidebar{padding-right:4px}
+
+/* Écran d'accès */
+html.locked body > :not(.gate):not(svg){display:none!important}
+.gate{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:var(--bg)}
+.gate-card{width:min(380px,100%);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px 24px;text-align:center;display:flex;flex-direction:column;gap:12px}
+.gate-card h1{margin:0;font-size:22px}
+.gate-logo{width:40px;height:40px;color:var(--acc);margin:0 auto}
+.gate-card form{display:flex;gap:8px}
+.gate-card form input{flex:1;min-width:0;text-align:center;letter-spacing:4px;font-size:18px;padding:10px;background:var(--bg2);border:1px solid var(--line);color:var(--txt);border-radius:10px}
+.gate-card .btn{justify-content:center}

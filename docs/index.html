@@ -47,6 +47,7 @@
   <div class="top-actions">
     <button class="btn ghost hide-mobile" id="btnRefresh" title="Lancer une collecte maintenant"><svg class="i"><use href="#i-refresh"/></svg> <span>Actualiser</span></button>
     <button class="btn ghost" id="btnAlerts"><svg class="i"><use href="#i-mail"/></svg> <span class="hide-mobile">Alertes e-mail</span></button>
+    <button class="btn ghost" id="btnLogout" title="Se déconnecter de cet appareil" onclick="cvLogout()" aria-label="Se déconnecter"><svg class="i"><use href="#i-lock"/></svg></button>
     <button class="btn primary" id="btnAI"><svg class="i"><use href="#i-spark"/></svg> <span class="hide-mobile">Assistant IA</span></button>
   </div>
 </header>
@@ -199,6 +200,7 @@
 
 <div class="scrim" id="scrim"></div>
 <div class="toasts" id="toasts"></div>
+<script src="auth.js?v=1"></script>
 <script src="ai-local.js?v=1794484994"></script>
 <script src="app.js?v=1794484994"></script>
 </body>
