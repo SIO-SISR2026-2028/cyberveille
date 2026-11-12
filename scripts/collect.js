@@ -64,25 +64,31 @@ function isFrance(a, src) {
   return FR_RE.test(t);
 }
 
-// ---------- Traduction (titres et résumés publics uniquement) ----------
+// ---------- Traduction LOCALE (modèle Opus-MT anglais → français, aucun service externe) ----------
+let translator = null;
 async function translate(text) {
   if (!text) return text;
-  const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=fr&dt=t&q=' + encodeURIComponent(text.slice(0, 1500));
-  const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
-  if (!r.ok) throw new Error('trad HTTP ' + r.status + ' ' + (await r.text()).slice(0, 100));
-  const j = await r.json();
-  if (j[2] === 'fr') return null; // déjà en français
-  return j[0].map(x => x[0]).join('');
+  if (!translator) {
+    const { pipeline, env } = await import('@xenova/transformers');
+    env.cacheDir = path.join(ROOT, '.cache', 'models');
+    translator = await pipeline('translation', 'Xenova/opus-mt-en-fr');
+  }
+  const parts = text.match(/[^.!?]+[.!?]*\s*/g) || [text];
+  const out = [];
+  for (const p of parts.slice(0, 6)) {
+    const r = await translator(p.trim(), { max_new_tokens: 200 });
+    out.push(r[0].translation_text);
+  }
+  return out.join(' ');
 }
 const TRAD = { error: null, done: 0 };
-async function translateBatch(list, max = 80) {
+async function translateBatch(list, max = 120) {
   let n = 0;
   for (const a of list) {
     if (n >= max) break;
     if (a.lang) continue;
     try {
       const t = await translate(a.title);
-      if (t === null) { a.lang = 'fr'; continue; }
       const sm = a.summary ? await translate(a.summary) : '';
       a.titleOrig = a.title; a.summaryOrig = a.summary;
       a.title = t; a.summary = sm || a.summary; a.lang = 'en'; n++;
@@ -178,7 +184,7 @@ async function maybeMail(articles, state) {
     .filter(a => isThreat(a) && a.published >= cutoff).sort((a, b) => b.published - a.published);
   const srcById = Object.fromEntries(sources.map(s => [s.id, s]));
   for (const a of articles) if (!a.lang && srcById[a.sourceId]?.region === 'fr') a.lang = 'fr';
-  await translateBatch(articles.filter(a => !a.lang));
+  await translateBatch(articles.filter(a => !a.lang && srcById[a.sourceId]?.region === 'int'));
   for (const a of articles) a.france = isFrance(a, srcById[a.sourceId]);
 
   fs.writeFileSync(path.join(DATA, 'articles.json'), JSON.stringify(articles));
