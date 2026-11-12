@@ -56,6 +56,9 @@ jobs:
           git diff --staged --quiet || git commit -m "Mise à jour des actus" -q
           git pull --rebase -q && git push -q || true
 
+      - name: Version des fichiers (anti-cache)
+        run: sed -i -E "s/\?v=[0-9a-z]+/?v=${GITHUB_SHA::7}/g" docs/index.html
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
