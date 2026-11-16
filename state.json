@@ -2,73 +2,73 @@
  "sources": {
   "certfr": {
    "ok": true,
-   "lastCheck": 1794809221312,
+   "lastCheck": 1794818788556,
    "lastError": null,
    "feedUrl": "https://cert.cyber.gouv.fr/feed/"
   },
   "cnil": {
    "ok": true,
-   "lastCheck": 1794809221706,
+   "lastCheck": 1794818788975,
    "lastError": null,
    "feedUrl": "https://www.cnil.fr/fr/rss.xml"
   },
   "numerama": {
    "ok": true,
-   "lastCheck": 1794809221648,
+   "lastCheck": 1794818788864,
    "lastError": null,
    "feedUrl": "https://www.numerama.com/cyberguerre/feed/"
   },
   "zataz": {
    "ok": true,
-   "lastCheck": 1794809221872,
+   "lastCheck": 1794818789090,
    "lastError": null,
    "feedUrl": "https://www.zataz.com/feed/"
   },
   "cybermalveillance": {
    "ok": true,
-   "lastCheck": 1794809221431,
+   "lastCheck": 1794818788788,
    "lastError": null,
    "feedUrl": "https://www.cybermalveillance.gouv.fr/feed/atom-flux-actualites"
   },
   "cyberattaque": {
    "ok": true,
-   "lastCheck": 1794809222138,
+   "lastCheck": 1794818789529,
    "lastError": null,
    "feedUrl": "https://www.cyberattaque.org/feed/"
   },
   "lemagit": {
    "ok": true,
-   "lastCheck": 1794809222255,
+   "lastCheck": 1794818790301,
    "lastError": null,
    "feedUrl": "https://www.lemagit.fr/rss/ContentSyndication.xml"
   },
   "bleeping": {
    "ok": true,
-   "lastCheck": 1794809222503,
+   "lastCheck": 1794818789729,
    "lastError": null,
    "feedUrl": "https://www.bleepingcomputer.com/feed/"
   },
   "zdnetfr": {
    "ok": true,
-   "lastCheck": 1794809222752,
+   "lastCheck": 1794818789832,
    "lastError": null,
    "feedUrl": "https://www.zdnet.fr/feeds/rss/actualites/"
   },
   "undernews": {
    "ok": true,
-   "lastCheck": 1794809222476,
+   "lastCheck": 1794818790068,
    "lastError": null,
    "feedUrl": "https://www.undernews.fr/feed"
   },
   "thn": {
    "ok": true,
-   "lastCheck": 1794809222609,
+   "lastCheck": 1794818790020,
    "lastError": null,
    "feedUrl": "https://feeds.feedburner.com/TheHackersNews"
   },
   "securityweek": {
    "ok": true,
-   "lastCheck": 1794809222569,
+   "lastCheck": 1794818789836,
    "lastError": null,
    "feedUrl": "https://www.securityweek.com/feed/"
   },
@@ -79,26 +79,26 @@
   },
   "gsm": {
    "ok": true,
-   "lastCheck": 1794809222821,
+   "lastCheck": 1794818790080,
    "lastError": null,
    "feedUrl": "https://www.globalsecuritymag.fr/spip.php?page=backend"
   },
   "therecord": {
    "ok": true,
-   "lastCheck": 1794809222652,
+   "lastCheck": 1794818789793,
    "lastError": null,
    "feedUrl": "https://therecord.media/feed"
   },
   "darkreading": {
    "ok": true,
-   "lastCheck": 1794809223041,
+   "lastCheck": 1794818790215,
    "lastError": null,
    "feedUrl": "https://www.darkreading.com/rss.xml"
   },
   "lmi": {
-   "ok": true,
-   "lastCheck": 1794809223104,
-   "lastError": null,
+   "ok": false,
+   "lastCheck": 1794818808848,
+   "lastError": "Request timed out after 10000ms",
    "feedUrl": "https://www.lemondeinformatique.fr/flux-rss/thematique/securite/rss.xml"
   },
   "cybergend": {
@@ -108,7 +108,7 @@
   },
   "nextink": {
    "ok": true,
-   "lastCheck": 1794809223333,
+   "lastCheck": 1794818790631,
    "lastError": null,
    "feedUrl": "https://next.ink/feed/"
   },
@@ -120,13 +120,13 @@
   },
   "anssi": {
    "ok": true,
-   "lastCheck": 1794809221753,
+   "lastCheck": 1794818788987,
    "lastError": null,
    "feedUrl": "https://cyber.gouv.fr/actualites/rss/"
   },
   "itconnect": {
    "ok": true,
-   "lastCheck": 1794809223610,
+   "lastCheck": 1794818790876,
    "lastError": null,
    "feedUrl": "https://www.it-connect.fr/feed/"
   },
@@ -142,10 +142,10 @@
   }
  },
  "lastTest": {
-  "at": 1794728179685,
+  "at": 1794818906474,
   "ok": true,
-  "n": 1
+  "n": 4
  },
- "lastMail": 1794728179685,
- "lastMailDate": "2026-11-15"
+ "lastMail": 1794818906474,
+ "lastMailDate": "2026-11-16"
 }
